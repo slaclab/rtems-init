@@ -1,3 +1,5 @@
 *.o
-build-*
+/build/
 *.obj
+.waf*
+.lock*

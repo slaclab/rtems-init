@@ -1,0 +1,6 @@
+[submodule "rtems-tools"]
+	path = rtems-tools
+	url = git@github.com:JJL772/rtems-tools.git
+[submodule "rtems_waf"]
+	path = rtems_waf
+	url = https://gitlab.rtems.org/rtems/tools/rtems_waf.git
