@@ -37,8 +37,10 @@ def build(bld):
     rtems.build(bld)
     bld.env.CFLAGS += ['-O2','-g']
     bld(features = 'c cprogram',
+        defines = ['RTEMS_NETWORK_CONFIG_CLUSTER_SPACE=5120', 'RTEMS_NETWORK_CONFIG_MBUF_SPACE=2048'],
         target = 'rtems.exe',
         source = [
             'src/rtems_config.c',
             'src/init.c'
-        ])
+        ],
+        lib='rtemsbsp rtemscpu bsd rtemscxx ntp debugger tftpfs c m')

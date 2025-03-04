@@ -1,0 +1,8 @@
+# file              permissions   owner:group
+/etc/passwd         0644
+/etc/group          0644
+/etc/dhcpcd.conf    0777
+/etc/leap-seconds   0644
+/etc/ntp.conf       0644
+/etc/services       0644
+/etc/motd           0644

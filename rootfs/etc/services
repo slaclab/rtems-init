@@ -1,0 +1,2 @@
+ntp                123/tcp      # Network Time Protocol  [Dave_Mills] [RFC5905]
+ntp                123/udp      # Network Time Protocol  [Dave_Mills] [RFC5905]
