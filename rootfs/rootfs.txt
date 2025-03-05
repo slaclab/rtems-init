@@ -6,3 +6,4 @@
 /etc/ntp.conf       0644
 /etc/services       0644
 /etc/motd           0644
+/etc/localtime      0644

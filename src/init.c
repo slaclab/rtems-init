@@ -22,7 +22,7 @@
 #include <rtems/rtl/rtl-shell.h>
 #include <rtems/telnetd.h>
 #include <pthread.h>
-
+#include <rtems/bsd/sys/resource.h>
 #include "rtems-init.h"
 #include "util.h"
 
@@ -39,6 +39,8 @@ static const char* BANNER =
 static void telnetd_init_command(char*, void*);
 
 struct dhcp_runtime_cfg dhcp_runtime_cfg;
+
+int verbose = 1;
 
 rtems_telnetd_config_table rtems_telnetd_config = {
   .stack_size = 0,
@@ -99,8 +101,10 @@ serial_init()
   puts(BANNER);
 
   printf("*** RTEMS %s\n", rtems_get_version_string());
-  
+
+#ifdef BSP_I2C_BUS0_NAME
   BSP_i2c_initialize();
+#endif
 }
 
 void
@@ -110,7 +114,8 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
   char* c = NULL;
 
   for (char* const* e = env; *e != NULL; ++e) {
-    printf(" dhcpd: '%s'\n", *e);
+    if (verbose)
+      printf(" dhcpd: '%s'\n", *e);
 
     if (strHasPrefix(*e, "interface")) {
       if ((c = strpbrk(*e, "="))) {
@@ -332,3 +337,23 @@ POSIX_Init(void *argument)
   shell_init();
   return 0;
 }
+
+/* Ensure that stdio goes to serial (so it can be captured) */
+#if defined(__i386__) && !USE_COM1_AS_CONSOLE
+#include <uart.h>
+#if __RTEMS_MAJOR__ > 4
+#include <libchip/serial.h>
+#endif
+
+extern int BSPPrintkPort;
+void bsp_predriver_hook(void)
+{
+#if __RTEMS_MAJOR__ > 4
+    Console_Port_Minor = BSP_CONSOLE_PORT_COM1;
+#else
+    BSPConsolePort = BSP_CONSOLE_PORT_COM1;
+
+#endif
+    BSPPrintkPort = BSP_CONSOLE_PORT_COM1;
+}
+#endif

@@ -10,6 +10,7 @@
 #include <machine/rtems-bsd-commands.h>
 
 #include "rtems-init.h"
+#include "util.h"
 
 static rtems_id ntp_thread;
 
@@ -38,6 +39,7 @@ run_ntpd(rtems_task_argument arg)
   
   if (!pntp1) {
     printf("No NTP servers provided by DHCP or NVRAM, skipping NTP...\n");
+    rtems_task_delete(RTEMS_SELF);
     return;
   }
 
@@ -53,10 +55,17 @@ run_ntpd(rtems_task_argument arg)
   if (pntp2) ntpcmd[i++] = pntp2;
   if (pntp3) ntpcmd[i++] = pntp3;
 
-  printf("Running");
-  for (int n = 0; n < i; ++n)
-    printf(" %s ", ntpcmd[n]);
-  puts("");
+  if (verbose) {
+    printf("Running");
+    for (int n = 0; n < i; ++n)
+      printf(" %s ", ntpcmd[n]);
+    puts("");
+  }
+
+  printf("NTP servers: %s %s %s\n", 
+    pntp1 ? pntp1 : "",
+    pntp2 ? pntp2 : "",
+    pntp3 ? pntp3: "");
 
   r = rtems_ntpd_run(i, ntpcmd);
   
@@ -73,6 +82,9 @@ ntp_init()
 {
   rtems_status_code r;
 
+  tzset();
+  printf("*** Set timezone to %s\n", tzname);
+
   rtems_name ntpt = rtems_build_name('N', 'T', 'P', 'D');
   r = rtems_task_create(
     ntpt,
@@ -87,7 +99,7 @@ ntp_init()
     printf("Failed to create NTPD task\n");
   }
   else {
-    if (rtems_task_start(ntp_thread, run_ntpd, NULL) != RTEMS_SUCCESSFUL) {
+    if (rtems_task_start(ntp_thread, run_ntpd, 0) != RTEMS_SUCCESSFUL) {
       printf("Failed to start NTPD task\n");
     }
   }

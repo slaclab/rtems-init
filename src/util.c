@@ -66,7 +66,7 @@ event_destroy(event_t *ev)
   free(ev);
 }
 
-static int
+int
 append_file(const char* file, const char* text)
 {
   int fd = open(file, O_WRONLY | O_CREAT, 0644);
@@ -79,6 +79,18 @@ append_file(const char* file, const char* text)
   }
 
   int r = write(fd, text, strlen(text));
+  close(fd);
+  return r;
+}
+
+ssize_t
+read_file(const char* file, char* buf, size_t bsize)
+{
+  int fd = open(file, O_RDONLY);
+  if (fd < 0)
+    return -1;
+
+  ssize_t r = read(fd, buf, bsize);
   close(fd);
   return r;
 }

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 /** Returns true (1) if the string starts with the prefix */
 static inline int
@@ -21,7 +22,9 @@ strncpySafe(char* str, const char* src, size_t len) {
 /**
  * Append some text to a file, creates the file if it doesn't exist.
  */
-static int append_file(const char* file, const char* text);
+extern int append_file(const char* file, const char* text);
+
+extern ssize_t read_file(const char* file, char* buf, size_t bsize);
 
 /** Generic event API */
 

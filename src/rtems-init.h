@@ -26,6 +26,8 @@ struct dhcp_runtime_cfg
 
 extern struct dhcp_runtime_cfg dhcp_runtime_cfg;
 
+extern int verbose;
+
 /********************************************************
  * shell.c
  ********************************************************/

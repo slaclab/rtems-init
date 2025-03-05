@@ -19,6 +19,13 @@
 
 #ifdef HAVE_MOTLOAD
 
+/**
+ * nvram boot parameters are set by Till's netboot system. Unlike GEVs,
+ * this is just a string stored in nvram. The format is:
+ *  MY_PARAM='some data'
+ * As far as I know, all data values are bounded by quotes, and the
+ * variable name is always separated using an =
+ */
 int
 boot_param(const char* param, char* result, size_t resultsz)
 {
@@ -167,7 +174,11 @@ gev_show()
 int
 nvram_get_boot_param(const char* param, char* res, size_t n)
 {
+#ifdef HAVE_MOTLOAD
   return boot_param(param, res, n);
+#else
+  return -1;
+#endif
 }
 
 /*************** Shell commands ***************/
