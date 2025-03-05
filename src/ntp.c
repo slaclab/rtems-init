@@ -77,13 +77,27 @@ run_ntpd(rtems_task_argument arg)
   rtems_task_delete(RTEMS_SELF);
 }
 
+void
+tz_init()
+{
+  char buf[512];
+  if (read_file("/etc/localtime", buf, sizeof(buf)) < 0) {
+    printf("**** Could not read /etc/localtime\n");
+    return;
+  }
+  strtok(buf, ",");
+  setenv("TZ", buf, 1);
+  tzset();
+
+  printf("**** Set timezone to %s\n", tzname);
+}
+
 int
 ntp_init()
 {
   rtems_status_code r;
 
-  tzset();
-  printf("*** Set timezone to %s\n", tzname);
+  tz_init();
 
   rtems_name ntpt = rtems_build_name('N', 'T', 'P', 'D');
   r = rtems_task_create(
