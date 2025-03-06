@@ -7,6 +7,7 @@
 #include <ctype.h>
 
 #include "rtems-init.h"
+#include "util.h"
 
 #if defined(BSP_beatnik) || defined(BSP_mvme3100)
 #define MOTLOAD_OFFSET 0x7000
@@ -17,7 +18,7 @@
 #define NVRAM_SIGN_SIZE (2*sizeof(uint16_t))
 #endif
 
-#ifdef HAVE_MOTLOAD
+#ifdef HAVE_NVRAM
 
 /**
  * nvram boot parameters are set by Till's netboot system. Unlike GEVs,
@@ -38,6 +39,10 @@ boot_param(const char* param, char* result, size_t resultsz)
     while (*pboot && isspace(*pboot) && pboot < pend)
       pboot++;
     
+    /** End of nvram */
+    if (!*pboot)
+      break;
+
     /** Scan until = token */
     const char* pstart = pboot;
     while (*pboot && *pboot != '=' && pboot<pend)
@@ -47,7 +52,7 @@ boot_param(const char* param, char* result, size_t resultsz)
       break;
     
     /** Compare parameter name (pboot is '=' currently) */
-    if (!strncmp(param, pstart, pboot-pstart-1)) {
+    if (!strncmp(param, pstart, max(pboot-pstart, strlen(param)))) {
       pboot += 2;
       if (pboot >= pend) break;
       /** Eat until closing quote */
@@ -76,6 +81,53 @@ boot_param(const char* param, char* result, size_t resultsz)
   }
   
   return -1; //nvram_parse_param(pboot, pend, param, result, resultsz, 0);
+}
+
+int
+boot_parm_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
+{
+  const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
+  const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
+  pboot += NVRAM_SIGN_SIZE;
+  
+  size_t pl = 0, vl = 0;
+  while (pboot < pend) {
+    /** Skip leading space */
+    while (*pboot && isspace(*pboot) && pboot < pend)
+      pboot++;
+    
+    /** End of nvram */
+    if (!*pboot)
+      break;
+
+    /** Scan until = token */
+    const char* pstart = pboot;
+    while (*pboot && *pboot != '=' && pboot<pend)
+      pboot++;
+    
+    if (!*pboot || pboot >= pend)
+      break;
+
+    /** Compute parameter length; pboot is currently '=' */
+    pl = pboot-pstart;
+
+    /** Skip = and ' */
+    pboot += 2;
+    if (pboot >= pend) break;
+    const char* vs = pboot;
+
+    /** Scan until closing quote */
+    while (*pboot != '\'' && *pboot && pboot < pend)
+      pboot++;
+
+    /** Compute value length, excluding quote */
+    vl = pboot - vs;
+
+    parsed(pstart, pl, vs, vl);
+
+    pboot++;
+  }
+  return 0;
 }
 
 int
@@ -191,7 +243,7 @@ shell_nvram_get(int argc, char** argv)
     return -1;
   }
 
-#ifdef HAVE_MOTLOAD
+#ifdef HAVE_NVRAM
   char buf[512];
   if (boot_param(argv[1], buf, sizeof(buf)) < 0) {
     fprintf(stderr, "unable to find nvram parameter %s\n", argv[1]);
@@ -208,7 +260,7 @@ shell_nvram_get(int argc, char** argv)
 int
 shell_nvram_show(int argc, char** argv)
 {
-#ifdef HAVE_MOTLOAD
+#ifdef HAVE_NVRAM
   boot_param_show_all();
 #else
   fprintf(stderr, "nvram unimplemented for this BSP\n");
@@ -225,7 +277,7 @@ shell_gev_get(int argc, char** argv)
     return -1;
   }
 
-#ifdef HAVE_MOTLOAD
+#ifdef HAVE_NVRAM
   char buf[512];
   if (gev_param(argv[1], buf, sizeof(buf)) < 0) {
     fprintf(stderr, "unable to find gev nvram parameter %s\n", argv[1]);
@@ -242,11 +294,32 @@ shell_gev_get(int argc, char** argv)
 int
 shell_gev_show(int argc, char** argv)
 {
-#ifdef HAVE_MOTLOAD
+#ifdef HAVE_NVRAM
   gev_show();
 #else
   fprintf(stderr, "nvram unimplemented for this BSP\n");
   return -1;
+#endif
+  return 0;
+}
+
+static void
+put_param_env(const char* param, size_t pl, const char* val, size_t vl)
+{
+  char sparam[256];
+  strncpySafe(sparam, param, min(sizeof(sparam), pl+1));
+
+  char sval[1024];
+  strncpySafe(sval, val, min(sizeof(sval), vl+1));
+
+  setenv(sparam, sval, 1);
+}
+
+int
+nvram_init()
+{
+#ifdef HAVE_NVRAM
+  boot_parm_foreach(put_param_env);
 #endif
   return 0;
 }

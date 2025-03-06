@@ -55,13 +55,6 @@ run_ntpd(rtems_task_argument arg)
   if (pntp2) ntpcmd[i++] = pntp2;
   if (pntp3) ntpcmd[i++] = pntp3;
 
-  if (verbose) {
-    printf("Running");
-    for (int n = 0; n < i; ++n)
-      printf(" %s ", ntpcmd[n]);
-    puts("");
-  }
-
   printf("NTP servers: %s %s %s\n", 
     pntp1 ? pntp1 : "",
     pntp2 ? pntp2 : "",
@@ -89,7 +82,7 @@ tz_init()
   setenv("TZ", buf, 1);
   tzset();
 
-  printf("**** Set timezone to %s\n", tzname);
+  printf("**** Set timezone to %s\n", buf);
 }
 
 int

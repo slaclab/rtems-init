@@ -21,6 +21,7 @@
 static int shell_debugger_start(int,char**);
 static int shell_debugger_stop(int argc, char** argv);
 static int shell_read_temp(int argc, char** argv);
+static int shell_dumpenv(int argc, char** argv);
 
 #define GEV_SHOW_USAGE "gevShow -- Display all GEV NVRAM parameters"
 #define GEV_GET_USAGE "gevGet paramName -- Display value of a specific GEV parameter"
@@ -43,6 +44,7 @@ struct shell_cmd shell_cmds[] =
   { "gevShow",    "nvram",  GEV_SHOW_USAGE,       shell_gev_show },
   { "temp",       "misc",   "",                   shell_read_temp },
   { "ntpd",       "net",    "",                   rtems_ntpd_run },
+  { "dumpenv",    "misc",   "",                   shell_dumpenv },
   { NULL,         NULL,     NULL,                 NULL },
 };
 
@@ -108,5 +110,14 @@ shell_read_temp(int argc, char** argv)
 #else
   printf("temperature reading not supported on this BSP\n");
 #endif
+  return 0;
+}
+
+static int
+shell_dumpenv(int argc, char** argv)
+{
+  for (char** e = environ; e && *e; e++) {
+    puts(*e);
+  }
   return 0;
 }

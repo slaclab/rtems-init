@@ -7,6 +7,7 @@
 #define HAVE_MOTLOAD
 #define RTEMS_NETWORK_CONFIG_MBUF_SPACE 2048
 #define RTEMS_NETWORK_CONFIG_CLUSTER_SPACE 5120
+#define HAVE_NVRAM
 #endif
 
 struct dhcp_runtime_cfg
@@ -52,6 +53,7 @@ extern void unpack_rootfs();
  * nvram.c
  ********************************************************/
 
+extern int nvram_init();
 extern int nvram_get_boot_param(const char* param, char* res, size_t n);
 
 extern int shell_nvram_get(int argc, char** argv);

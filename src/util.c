@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 struct _event_s
 {
@@ -93,4 +95,83 @@ read_file(const char* file, char* buf, size_t bsize)
   ssize_t r = read(fd, buf, bsize);
   close(fd);
   return r;
+}
+
+int 
+parse_mount_spec(const char* mntblock, enum fstype* fstype, uint32_t* uid,
+  uint32_t* gid, char* ip, char* src, char* mntpt, char* file)
+{
+  int skip = 0;
+  if (strHasPrefix(mntblock, "nfs2::"))
+    skip = 6, *fstype = FS_TYPE_NFS2;
+  else if (strHasPrefix(mntblock, "nfs3::"))
+    skip = 6,*fstype = FS_TYPE_NFS3;
+  else if (strHasPrefix(mntblock, "nfs::"))
+    skip = 5,*fstype = FS_TYPE_NFS3;
+  else if (strHasPrefix(mntblock, "nfs4::"))
+    skip = 6, *fstype = FS_TYPE_NFS4;
+  else if (strHasPrefix(mntblock, "9p::"))
+    skip = 4, *fstype = FS_TYPE_9P;
+  else
+    *fstype = FS_TYPE_NFS3;
+  mntblock += skip;
+
+  /** Try to find optional 1234.4567@ prefix */
+  const char* p = strpbrk(mntblock, "@");
+  if (p) {
+    const char* g = strpbrk(mntblock, ".");
+    /** Must be lone uid */
+    if (!g || g > p) {
+      char* ep = p-1;
+      *uid = strtol(mntblock, &ep, 10);
+    }
+    /** full uid.gid */
+    else {
+      char* ep = g-1;
+      *uid = strtol(mntblock, &ep, 10);
+      ep = p-1;
+      *gid = strtol(g+1, &ep, 10);
+    }
+    mntblock = p+1;
+  }
+
+  /** Find end of server decl */
+  const char* srvend = strchr(mntblock, ':');
+
+  if (!srvend)
+    return -1;
+
+  strncpySafe(ip, mntblock, min(MNT_STR_BUF_SZ, srvend-mntblock+1));
+  mntblock = srvend+1;
+
+  srvend = strchr(mntblock, ':');
+  if (!srvend)
+    return -1;
+
+  strncpySafe(src, mntblock, min(MNT_STR_BUF_SZ, srvend-mntblock+1));
+  mntblock = srvend+1;
+
+  /** Next part is optional; it may be either file name or the mountpoint */
+  const char* mntend = strchr(mntblock, ':');
+  if (!mntend) {
+    *file = *mntpt = 0;
+    /** mountpoint the same as the source */
+    strncpySafe(mntpt, src, MNT_STR_BUF_SZ);
+    /** And the remaining bytes are the file */
+    strncpySafe(file, mntblock, MNT_STR_BUF_SZ);
+    return 0;
+  }
+
+  /** If we still have remaining text, this is the file name */
+  if (*(mntend+1)) {
+    strncpySafe(file, mntend+1, MNT_STR_BUF_SZ);
+    /** And the previous block was mount point */
+    strncpySafe(mntpt, mntblock, min(MNT_STR_BUF_SZ, mntend-mntblock+1));
+  }
+  /** Otherwise, the previous block was file */
+  else {
+    strncpySafe(file, mntblock, min(MNT_STR_BUF_SZ, mntend-mntblock+1));
+  }
+
+  return 0;
 }

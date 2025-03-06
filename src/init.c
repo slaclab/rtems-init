@@ -22,7 +22,7 @@
 #include <rtems/rtl/rtl-shell.h>
 #include <rtems/telnetd.h>
 #include <pthread.h>
-#include <rtems/bsd/sys/resource.h>
+
 #include "rtems-init.h"
 #include "util.h"
 
@@ -331,6 +331,7 @@ shell_init()
 void*
 POSIX_Init(void *argument)
 {
+  nvram_init();
   serial_init();
   imfs_init();
   network_init();
@@ -346,7 +347,8 @@ POSIX_Init(void *argument)
 #endif
 
 extern int BSPPrintkPort;
-void bsp_predriver_hook(void)
+void 
+bsp_predriver_hook(void)
 {
 #if __RTEMS_MAJOR__ > 4
     Console_Port_Minor = BSP_CONSOLE_PORT_COM1;
