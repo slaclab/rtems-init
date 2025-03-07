@@ -25,9 +25,16 @@ struct dhcp_runtime_cfg
   struct _event_s* event;
 };
 
+enum init_mode {
+  INIT_MODE_CMDLINE,  /**< Use command line supplied by netboot */
+  INIT_MODE_NVRAM,    /**< Use raw params stored in nvram */
+  INIT_MODE_DHCP,     /**< Use DHCP */
+};
+
 extern struct dhcp_runtime_cfg dhcp_runtime_cfg;
 
 extern int verbose;
+extern enum init_mode init_mode;
 
 /********************************************************
  * shell.c
@@ -55,6 +62,7 @@ extern void unpack_rootfs();
 
 extern int nvram_init();
 extern int nvram_get_boot_param(const char* param, char* res, size_t n);
+extern int cmdline_get_param(const char* param, char* res, size_t n);
 
 extern int shell_nvram_get(int argc, char** argv);
 extern int shell_nvram_show(int argc, char** argv);

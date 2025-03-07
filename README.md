@@ -3,13 +3,17 @@
 rtems-init performs necessary setup (DHCP, NTP), and provides a framework for system configuration.
 This is mostly targeted at EPICS IOCs, particularly ones that need additional system configuration outside of EPICS base itself.
 
+## Boot Process
+
+Boot parameters are supplied by two sources: NVRAM and DHCP.
+
 ## Supported BSPs
 
 Tested on: RTEMS-beatnik, RTEMS-pc686-qemu
 
-## Running with QEMU
+## Simulating with QEMU
 
-The target that supports qemu is RTEMS-pc686-qemu, although you may have success with other targets.
+rtems-init can run on QEMU using the RTEMS-pc686-qemu target. Other targets may work, but I haven't tested them.
 
 First, build the target using `ninja -C build-cmake/build-rtems6-pc686-qemu`
 

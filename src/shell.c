@@ -22,6 +22,9 @@ static int shell_debugger_start(int,char**);
 static int shell_debugger_stop(int argc, char** argv);
 static int shell_read_temp(int argc, char** argv);
 static int shell_dumpenv(int argc, char** argv);
+static int shell_setuid(int argc, char** argv);
+static int shell_setgid(int argc, char** argv);
+static int shell_getuid(int argc, char** argv);
 
 #define GEV_SHOW_USAGE "gevShow -- Display all GEV NVRAM parameters"
 #define GEV_GET_USAGE "gevGet paramName -- Display value of a specific GEV parameter"
@@ -45,6 +48,9 @@ struct shell_cmd shell_cmds[] =
   { "temp",       "misc",   "",                   shell_read_temp },
   { "ntpd",       "net",    "",                   rtems_ntpd_run },
   { "dumpenv",    "misc",   "",                   shell_dumpenv },
+  { "setuid",     "misc",   "",                   shell_setuid },
+  { "getuid",     "misc",   "",                   shell_getuid },
+  { "setgid",     "misc",   "",                   shell_setgid },
   { NULL,         NULL,     NULL,                 NULL },
 };
 
@@ -119,5 +125,51 @@ shell_dumpenv(int argc, char** argv)
   for (char** e = environ; e && *e; e++) {
     puts(*e);
   }
+  return 0;
+}
+
+static int
+shell_setuid(int argc, char** argv)
+{
+  if (argc < 2) {
+    printf("USAGE: %s <id>\n", argv[0]);
+    return -1;
+  }
+  
+  char* endp = NULL;
+  uint32_t uid = strtoul(argv[1], &endp, 10);
+  if (*endp) {
+    printf("Invalid uid %s\n", argv[1]);
+    return -1;
+  }
+  setuid(uid);
+  
+  return 0;
+}
+
+static int
+shell_setgid(int argc, char** argv)
+{
+  if (argc < 2) {
+    printf("USAGE: %s <id>\n", argv[0]);
+    return -1;
+  }
+  
+  char* endp = NULL;
+  uint32_t gid = strtoul(argv[1], &endp, 10);
+  if (*endp) {
+    printf("Invalid gid %s\n", argv[1]);
+    return -1;
+  }
+  setgid(gid);
+  
+  return 0;
+}
+
+
+static int
+shell_getuid(int argc, char** argv)
+{
+  printf("%u\n", getuid());
   return 0;
 }

@@ -47,8 +47,8 @@ const char TEST[] =
   
 };
 
-//const char TEST[] =
-//"BP_FILE='s3dflclsdevnfs001:/sdf/group/cds:sw/epics/users/lorelli/epics/ioc/atlas/bin/RTEMS-beatnik/rtems-init.boot' BP_PARM='INIT=8412.2211@s3dflclsdevnfs001:/sdf/group/cds:sw/epics/iocCommon/ioc-b084-rf02/startup.cmd' BP_SRVR='172.23.66.102' BP_GTWY='134.79.219.1' BP_MYIP='134.79.218.101' BP_MYMK='255.255.252.0' BP_MYNM='ioc-b084-rf02' BP_MYDN='slac.stanford.edu' BP_DNS1='134.79.111.111' BP_DNS2='134.79.111.112' BP_NTP1='134.79.110.75' BP_NTP2='134.79.110.10' BP_NTP3='134.79.110.9' BP_ENBL='Y' BP_DELY='5' \0fjafs=kaskfjask fjaskj=tewitwieut jd jgkskj";
+const char TESTCMD[] =
+"BP_FILE='s3dflclsdevnfs001:/sdf/group/cds:sw/epics/users/lorelli/epics/ioc/atlas/bin/RTEMS-beatnik/rtems-init.boot' BP_PARM='INIT=8412.2211@s3dflclsdevnfs001:/sdf/group/cds:sw/epics/iocCommon/ioc-b084-rf02/startup.cmd' BP_SRVR='172.23.66.102' BP_GTWY='134.79.219.1' BP_MYIP='134.79.218.101' BP_MYMK='255.255.252.0' BP_MYNM='ioc-b084-rf02' BP_MYDN='slac.stanford.edu' BP_DNS1='134.79.111.111' BP_DNS2='134.79.111.112' BP_NTP1='134.79.110.75' BP_NTP2='134.79.110.10' BP_NTP3='134.79.110.9' BP_ENBL='Y' BP_DELY='5' \0fjafs=kaskfjask fjaskj=tewitwieut jd jgkskj";
 
 int
 boot_parm_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
@@ -97,10 +97,10 @@ boot_parm_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
 void 
 p(const char* p, size_t pl, const char* v, size_t vl)
 {
-  fwrite(p, pl, 1, stdout);
-  puts("");
-  fwrite(v, vl, 1, stdout);
-  puts("");
+  //fwrite(p, pl, 1, stdout);
+  //puts("");
+  //fwrite(v, vl, 1, stdout);
+  //puts("");
 
   char sparam[256];
   strncpySafe(sparam, p, min(sizeof(sparam), pl+1));
@@ -168,9 +168,60 @@ test_parsing()
   }
 }
 
+const char cheese[] =
+"BP_FILE=s3dflclsdevnfs001:/sdf/group/cds:sw/epics/users/lorelli/epics/ioc/atlas/bin/RTEMS-beatnik/rtems-init.boot BP_PARM='INIT=8412.2211@s3dflclsdevnfs001:/sdf/group/cds:sw/epics/iocCommon/ioc-b084-rf02/startup.cmd' BP_SRVR=134.79.216.58 BP_GTWY=134.79.219.1 BP_MYIP=134.79.218.101 BP_MYMK=255.255.252.0 BP_MYNM=ioc-b084-rf02 BP_MYDN=slac.stanford.edu BP_DNS1=134.79.111.111 BP_DNS2=134.79.111.112 BP_NTP1=134.79.110.75 BP_NTP2=134.79.110.10 BP_NTP3=134.79.110.9 BP_ENBL=N";
+
+static int
+parse_boot_foreach(const char* pboot, const char* pend,
+  void(*parsed)(const char*, size_t, const char*, size_t))
+{
+  size_t pl = 0, vl = 0;
+  while (pboot < pend) {
+    int quoted = 0;
+
+    /** Skip leading space */
+    while (*pboot && isspace(*pboot) && pboot < pend)
+      pboot++;
+    
+    /** End of nvram */
+    if (!*pboot)
+      break;
+
+    /** Scan until = token */
+    const char* pstart = pboot;
+    while (*pboot && *pboot != '=' && pboot<pend)
+      pboot++;
+    
+    if (!*pboot || pboot >= pend)
+      break;
+
+    /** Compute parameter length; pboot is currently '=' */
+    pl = pboot-pstart;
+
+    /** Skip = and ' (if it's there) */
+    pboot++;
+    if (*pboot == '\'') quoted = 1, pboot++;
+    if (pboot >= pend) break;
+    const char* vs = pboot;
+
+    /** Scan until closing quote or space */
+    while ((quoted ? *pboot != '\'' : *pboot != ' ') && *pboot && pboot < pend)
+      pboot++;
+
+    /** Compute value length, excluding quote */
+    vl = pboot - vs;
+
+    parsed(pstart, pl, vs, vl);
+
+    pboot++;
+  }
+  return 0;
+}
+
 int
 main(int argc, char** argv)
 {
-  test_parsing();
-  //boot_parm_foreach(p);
+  //test_parsing();
+  parse_boot_foreach(cheese,cheese+sizeof(cheese),p);
+  parse_boot_foreach(TESTCMD, TESTCMD+sizeof(TESTCMD), p);
 }

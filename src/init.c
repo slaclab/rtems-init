@@ -42,6 +42,8 @@ struct dhcp_runtime_cfg dhcp_runtime_cfg;
 
 int verbose = 1;
 
+enum init_mode init_mode = INIT_MODE_CMDLINE;
+
 rtems_telnetd_config_table rtems_telnetd_config = {
   .stack_size = 0,
   .login_check = NULL,
@@ -101,6 +103,7 @@ serial_init()
   puts(BANNER);
 
   printf("*** RTEMS %s\n", rtems_get_version_string());
+  printf("*** BSP command line: %s\n", rtems_bsp_cmdline_get());
 
 #ifdef BSP_I2C_BUS0_NAME
   BSP_i2c_initialize();
@@ -212,6 +215,26 @@ do_dhcp()
   /** FIXME: timeout leaks an event */
 }
 
+static void
+generate_resolv_conf()
+{
+  FILE* fp = fopen("/etc/resolv.conf", "wb");
+  if (!fp) {
+    printf("*** Failed to create /etc/resolv.conf\n");
+    return;
+  }
+
+  const char* d = NULL;
+  if ((d = getenv("BP_DNS1")))
+    fprintf(fp, "nameserver %s\n", d);
+  if ((d = getenv("BP_DNS2")))
+    fprintf(fp, "nameserver %s\n", d);
+  if ((d = getenv("BP_DNS3")))
+    fprintf(fp, "nameserver %s\n\n", d);
+
+  fclose(fp);
+}
+
 /**
  * Init network and libbsd
  */
@@ -269,6 +292,9 @@ network_init()
   static char* IFCONFIG_ARGS[] = {"ifconfig", NULL};
   rtems_bsd_command_ifconfig(1, IFCONFIG_ARGS);
   
+  printf("*** Generating /etc/resolv.conf\n");
+  generate_resolv_conf();
+
   printf("*** Starting ntpd\n");
 
   if (ntp_init() != 0) {
@@ -286,6 +312,109 @@ network_init()
   }
 
   printf("** End network init\n");
+}
+
+static int
+do_mount(const char* ip, const char* src, const char* mntpt, 
+  uint32_t uid, uint32_t gid, enum fstype type)
+{
+  const char* fs;
+  switch (type) {
+  case FS_TYPE_NFS3:
+  case FS_TYPE_NFS4:
+  case FS_TYPE_NFS2:
+    fs = RTEMS_FILESYSTEM_TYPE_NFS;
+    break;
+  case FS_TYPE_9P:
+    /** Unsupported for now */
+  default:
+    printf("*** Unsupported FS type\n");
+    return -1;
+  }
+  
+  char source[512];
+  snprintf(source, sizeof(source), "%s:%s", ip, src);
+  
+  char opts[512];
+  snprintf(opts, sizeof(opts), "uid=%d,gid=%d", uid == 0 ? getuid() : uid,
+    gid == 0 ? getgid() : gid);
+
+  if (mount(source, mntpt, fs, 0, opts) < 0)
+    return -1;
+
+  printf("*** Mounted %s:%s at %s\n", ip, src, mntpt);
+  return 0;
+}
+
+/**
+ * Init mounts as specified by DHCP or NVRAM
+ */
+void
+mounts_init()
+{
+  char ip[MNT_STR_BUF_SZ], src[MNT_STR_BUF_SZ], mntpt[MNT_STR_BUF_SZ], file[MNT_STR_BUF_SZ];
+  uint32_t gid, uid;
+  enum fstype fs;
+  const char* bp = NULL;
+
+  printf("** Setting up mounts\n");
+
+  /** We have multiple sources of truth...nvram, dhcp and cmdline. 
+    * Let's use the appropriate bootfile name. */
+  switch(init_mode) {
+  case INIT_MODE_CMDLINE:
+  case INIT_MODE_NVRAM:
+    bp = getenv("BP_FILE");
+    break;
+  case INIT_MODE_DHCP:
+    bp = dhcp_runtime_cfg.bootfile;
+    /** For DHCP, fallback to BP_FILE if not found */
+    if (!*bp) bp = getenv("BP_FILE");
+    break;
+  }
+
+  /** Mount FS that includes the boot file */
+  if (bp) {
+    if (parse_mount_spec(bp, &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
+      printf("*** BP_FILE malformed, unable to parse\n");
+    }
+    
+    if (do_mount(ip, src, mntpt, uid, gid, fs) < 0) {
+      printf("*** Mount failed for %s:%s:%s\n", ip, src, mntpt);
+    }
+  }
+
+  /** Likewise let's choose the appropriate BP_PARAM
+    * This will fallback to NVRAM/cmdline if DHCP doesn't work out
+    */
+  switch(init_mode) {
+  case INIT_MODE_CMDLINE:
+  case INIT_MODE_NVRAM:
+    bp = getenv("BP_PARAM");
+    break;
+  case INIT_MODE_DHCP:
+    bp = dhcp_runtime_cfg.cmdline;
+    if (!*bp) bp = getenv("BP_PARAM");
+    break;
+  }
+
+  /** Mount FS that includes cmdline */
+  if (bp) {
+    /** FIXME: actually parse this lol */
+    if (!strncmp(bp, "INIT=", sizeof("INIT=")-1))
+      bp += sizeof("INIT=")-1;
+    
+    if (parse_mount_spec(bp, &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
+      printf("*** BP_PARAM malformed, unable to parse\n");
+    }
+
+    if (do_mount(ip, src, mntpt, uid, gid, fs) < 0) {
+      printf("*** Mount failed for %s:%s:%s\n", ip, src, mntpt);
+    }
+  }
+  else {
+    printf("*** No BP_PARAM. Missing from NVRAM and DHCP?\n");
+  }
 }
 
 /**
@@ -335,6 +464,7 @@ POSIX_Init(void *argument)
   serial_init();
   imfs_init();
   network_init();
+  mounts_init();
   shell_init();
   return 0;
 }

@@ -2,6 +2,7 @@
 #include <rtems.h>
 #include <bsp.h>
 
+#include <rtems/bspcmdline.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <ctype.h>
@@ -18,8 +19,6 @@
 #define NVRAM_SIGN_SIZE (2*sizeof(uint16_t))
 #endif
 
-#ifdef HAVE_NVRAM
-
 /**
  * nvram boot parameters are set by Till's netboot system. Unlike GEVs,
  * this is just a string stored in nvram. The format is:
@@ -27,14 +26,13 @@
  * As far as I know, all data values are bounded by quotes, and the
  * variable name is always separated using an =
  */
-int
-boot_param(const char* param, char* result, size_t resultsz)
+static int
+parse_boot_string(const char* pboot, const char* pend, const char* param, 
+  char* result, size_t resultsz)
 {
-  const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
-  const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
-  pboot += NVRAM_SIGN_SIZE;
-  
   while (pboot < pend) {
+    int quoted = 0;
+
     /** Skip leading space */
     while (*pboot && isspace(*pboot) && pboot < pend)
       pboot++;
@@ -53,12 +51,14 @@ boot_param(const char* param, char* result, size_t resultsz)
     
     /** Compare parameter name (pboot is '=' currently) */
     if (!strncmp(param, pstart, max(pboot-pstart, strlen(param)))) {
-      pboot += 2;
+      pboot++;
+      if (*pboot == '\'') quoted = 1, pboot++;
       if (pboot >= pend) break;
       /** Eat until closing quote */
       size_t n = resultsz;
       char* p = result;
-      while (*pboot != '\'' && *pboot && pboot < pend && n > 0) {
+      while ((quoted ? *pboot != '\'' : *pboot != ' ') 
+              && *pboot && pboot < pend && n > 0) {
         *p = *pboot;
         p++, pboot++, n--;
       }
@@ -72,9 +72,10 @@ boot_param(const char* param, char* result, size_t resultsz)
     }
     /** No match; skip the parameter string */
     else {
-      pboot += 2;
+      pboot++;
+      if (*pboot == '\'') quoted = 1, pboot++;
       if (pboot >= pend) break;
-      while (*pboot && *pboot != '\'' && pboot < pend)
+      while ((quoted ? *pboot != '\'' : *pboot != ' ') && *pboot &&  pboot < pend)
         pboot++;
       pboot++;
     }
@@ -83,15 +84,14 @@ boot_param(const char* param, char* result, size_t resultsz)
   return -1; //nvram_parse_param(pboot, pend, param, result, resultsz, 0);
 }
 
-int
-boot_parm_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
+static int
+parse_boot_foreach(const char* pboot, const char* pend,
+  void(*parsed)(const char*, size_t, const char*, size_t))
 {
-  const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
-  const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
-  pboot += NVRAM_SIGN_SIZE;
-  
   size_t pl = 0, vl = 0;
   while (pboot < pend) {
+    int quoted = 0;
+
     /** Skip leading space */
     while (*pboot && isspace(*pboot) && pboot < pend)
       pboot++;
@@ -111,13 +111,14 @@ boot_parm_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
     /** Compute parameter length; pboot is currently '=' */
     pl = pboot-pstart;
 
-    /** Skip = and ' */
-    pboot += 2;
+    /** Skip = and ' (if it's there) */
+    pboot++;
+    if (*pboot == '\'') quoted = 1, pboot++;
     if (pboot >= pend) break;
     const char* vs = pboot;
 
-    /** Scan until closing quote */
-    while (*pboot != '\'' && *pboot && pboot < pend)
+    /** Scan until closing quote or space */
+    while ((quoted ? *pboot != '\'' : *pboot != ' ') && *pboot && pboot < pend)
       pboot++;
 
     /** Compute value length, excluding quote */
@@ -128,6 +129,26 @@ boot_parm_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
     pboot++;
   }
   return 0;
+}
+
+#ifdef HAVE_NVRAM
+
+int
+boot_param(const char* param, char* result, size_t resultsz)
+{
+  const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
+  const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
+  pboot += NVRAM_SIGN_SIZE;
+  return parse_boot_string(pboot, pend, param, result, resultsz);
+}
+
+int
+boot_param_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
+{
+  const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
+  const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
+  pboot += NVRAM_SIGN_SIZE;
+  return parse_boot_foreach(pboot, pend, parsed);
 }
 
 int
@@ -315,11 +336,40 @@ put_param_env(const char* param, size_t pl, const char* val, size_t vl)
   setenv(sparam, sval, 1);
 }
 
+static int
+cmdline_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
+{
+  const char* cmdline = rtems_bsp_cmdline_get();
+  if (!cmdline) return -1;
+  
+  /** Cache the cmdline length, it shouldn't change */
+  static int len = -1;
+  if (len < 0)
+    len = strlen(cmdline);
+
+  return parse_boot_foreach(cmdline, cmdline+len, parsed);
+}
+
 int
 nvram_init()
 {
 #ifdef HAVE_NVRAM
-  boot_parm_foreach(put_param_env);
+  boot_param_foreach(put_param_env);
 #endif
+  cmdline_foreach(put_param_env);
   return 0;
+}
+
+int
+cmdline_get_param(const char* param, char* res, size_t n)
+{
+  const char* cmdline = rtems_bsp_cmdline_get();
+  if (!cmdline) return -1;
+  
+  /** Cache the cmdline length, it shouldn't change */
+  static int len = -1;
+  if (len < 0)
+    len = strlen(cmdline);
+  
+  return parse_boot_string(cmdline, cmdline+len, param, res, n);
 }
