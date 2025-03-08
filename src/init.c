@@ -22,6 +22,8 @@
 #include <rtems/rtl/rtl-shell.h>
 #include <rtems/telnetd.h>
 #include <pthread.h>
+#include <netdb.h>
+#include <sys/socket.h>
 
 #include "rtems-init.h"
 #include "util.h"
@@ -102,7 +104,8 @@ serial_init()
   /** Display our really cool banner */
   puts(BANNER);
 
-  printf("*** RTEMS %s\n", rtems_get_version_string());
+  printf("*** RTEMS : %s\n", rtems_get_version_string());
+  printf("*** SLAC RTEMS Init System : Built %s %s\n", __DATE__, __TIME__);
   printf("*** BSP command line: %s\n", rtems_bsp_cmdline_get());
 
 #ifdef BSP_I2C_BUS0_NAME
@@ -130,7 +133,8 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
     else if (strHasPrefix(*e, "reason")) {
       if ((c = strpbrk(*e, "="))) {
         ++c;
-        if (!strcasecmp(c, "BOUND") || !strcasecmp(c, "REBIND")) // FIXME: rebind is correct or not?
+        /** FIXME: Is REBIND correct or not? */
+        if (!strcasecmp(c, "BOUND") || !strcasecmp(c, "REBIND"))
           bound = 1;
       }
     }
@@ -158,6 +162,29 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
           sizeof(dhcp_runtime_cfg.ntp3));
         strtok(dhcp_runtime_cfg.ntp3, " ");
       }
+    }
+    else if (strHasPrefix(*e, "new_domain_name_servers")) {
+      if ((c = strpbrk(*e, "="))) {
+        strncpySafe(dhcp_runtime_cfg.dns1, ++c,
+          sizeof(dhcp_runtime_cfg.dns1));
+        strtok(dhcp_runtime_cfg.dns1, " ");
+
+        c = strpbrk(c, " ");
+        if (!c) continue;
+        strncpySafe(dhcp_runtime_cfg.dns2, ++c,
+          sizeof(dhcp_runtime_cfg.dns2));
+        strtok(dhcp_runtime_cfg.dns2, " ");
+
+        c = strpbrk(c, " ");
+        if (!c) continue;
+        strncpySafe(dhcp_runtime_cfg.dns3, ++c,
+          sizeof(dhcp_runtime_cfg.dns3));
+        strtok(dhcp_runtime_cfg.dns3, " ");
+      }
+    }
+    else if (strHasPrefix(*e, "new_domain_name")) {
+      strncpySafe(dhcp_runtime_cfg.domain, *e, 
+        sizeof(dhcp_runtime_cfg.domain));
     }
     else if (strHasPrefix(*e, "new_tftp_server_name")) {
       if ((c = strpbrk(*e, "="))) {
@@ -191,6 +218,20 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
   
   if (bound) {
     printf("dhcp: done\n");
+
+    /** Commit changes to environment */
+    if (init_mode == INIT_MODE_DHCP) {
+      setenv("BP_DNS1", dhcp_runtime_cfg.dns1, 1);
+      setenv("BP_DNS2", dhcp_runtime_cfg.dns2, 1);
+      setenv("BP_DNS3", dhcp_runtime_cfg.dns3, 1);
+      setenv("BP_NTP1", dhcp_runtime_cfg.ntp1, 1);
+      setenv("BP_NTP2", dhcp_runtime_cfg.ntp2, 1);
+      setenv("BP_NTP3", dhcp_runtime_cfg.ntp3, 1);
+      setenv("BP_PARM", dhcp_runtime_cfg.cmdline, 1);
+      setenv("BP_MYDN", dhcp_runtime_cfg.domain, 1);
+      setenv("BP_FILE", dhcp_runtime_cfg.bootfile, 1);
+    }
+
     event_signal(dhcp_runtime_cfg.event);
   }
 }
@@ -231,6 +272,8 @@ generate_resolv_conf()
     fprintf(fp, "nameserver %s\n", d);
   if ((d = getenv("BP_DNS3")))
     fprintf(fp, "nameserver %s\n\n", d);
+  if ((d = getenv("BP_MYDN")))
+    fprintf(fp, "search %s\n", d);
 
   fclose(fp);
 }
@@ -283,7 +326,8 @@ network_init()
       NULL
     };
 
-    if (rtems_bsd_command_ifconfig(RTEMS_BSD_ARGC(ifcmd), ifcmd) != EXIT_SUCCESS) {
+    if (rtems_bsd_command_ifconfig(RTEMS_BSD_ARGC(ifcmd), ifcmd) 
+          != EXIT_SUCCESS) {
       printf("*** rtems_bsd_command_ifconfig failed\n");
     }
   }
@@ -319,11 +363,16 @@ do_mount(const char* ip, const char* src, const char* mntpt,
   uint32_t uid, uint32_t gid, enum fstype type)
 {
   const char* fs;
+  int vers = 2;
   switch (type) {
   case FS_TYPE_NFS3:
+    vers = 3, fs = RTEMS_FILESYSTEM_TYPE_NFS;
+    break;
   case FS_TYPE_NFS4:
+    vers = 4, fs = RTEMS_FILESYSTEM_TYPE_NFS;
+    break;
   case FS_TYPE_NFS2:
-    fs = RTEMS_FILESYSTEM_TYPE_NFS;
+    vers = 2, fs = RTEMS_FILESYSTEM_TYPE_NFS;
     break;
   case FS_TYPE_9P:
     /** Unsupported for now */
@@ -331,13 +380,44 @@ do_mount(const char* ip, const char* src, const char* mntpt,
     printf("*** Unsupported FS type\n");
     return -1;
   }
-  
+
+  /** Ensure mount point exists */
+  rtems_mkdir(mntpt, 0777);
+
+  struct addrinfo* ai = NULL;
+  struct addrinfo hint = {0};
+  hint.ai_family = AF_INET;
+  hint.ai_flags = AI_PASSIVE;
+  if (getaddrinfo(ip, NULL, &hint, &ai) != 0) {
+    perror("*** Addr lookup failed");
+    return -1;
+  }
+
+  if (ai->ai_addr->sa_len != sizeof(struct sockaddr_in) || 
+      ai->ai_addr->sa_family != AF_INET) {
+    printf("*** Addr lookup failed, didn't get ipv4 addr\n");
+    freeaddrinfo(ai);
+    return -1;
+  }
+
+  char newip[128];
+  struct sockaddr_in* si =
+    (struct sockaddr_in*)ai->ai_addr;
+  snprintf(newip, sizeof(newip), "%u.%u.%u.%u",
+    (si->sin_addr.s_addr & 0xFF000000) >> 24,
+    (si->sin_addr.s_addr & 0x00FF0000) >> 16,
+    (si->sin_addr.s_addr & 0x0000FF00) >> 8,
+    (si->sin_addr.s_addr & 0x000000FF));
+
+  freeaddrinfo(ai);
+
   char source[512];
-  snprintf(source, sizeof(source), "%s:%s", ip, src);
-  
-  char opts[512];
-  snprintf(opts, sizeof(opts), "uid=%d,gid=%d", uid == 0 ? getuid() : uid,
-    gid == 0 ? getgid() : gid);
+  snprintf(source, sizeof(source), "%s:%s", newip, src);
+
+  char opts[512] = {0};
+  /** FIXME: uid gid? */
+  /** Always mounting these as read-only, data area should be rw  */
+  snprintf(opts, sizeof(opts), "vers=%d,ro", vers);
 
   if (mount(source, mntpt, fs, 0, opts) < 0)
     return -1;
@@ -352,28 +432,16 @@ do_mount(const char* ip, const char* src, const char* mntpt,
 void
 mounts_init()
 {
-  char ip[MNT_STR_BUF_SZ], src[MNT_STR_BUF_SZ], mntpt[MNT_STR_BUF_SZ], file[MNT_STR_BUF_SZ];
-  uint32_t gid, uid;
+  char ip[MNT_STR_BUF_SZ], src[MNT_STR_BUF_SZ], mntpt[MNT_STR_BUF_SZ];
+  char file[MNT_STR_BUF_SZ];
+  uint32_t gid = 0, uid = 0;
   enum fstype fs;
   const char* bp = NULL;
 
   printf("** Setting up mounts\n");
 
-  /** We have multiple sources of truth...nvram, dhcp and cmdline. 
-    * Let's use the appropriate bootfile name. */
-  switch(init_mode) {
-  case INIT_MODE_CMDLINE:
-  case INIT_MODE_NVRAM:
-    bp = getenv("BP_FILE");
-    break;
-  case INIT_MODE_DHCP:
-    bp = dhcp_runtime_cfg.bootfile;
-    /** For DHCP, fallback to BP_FILE if not found */
-    if (!*bp) bp = getenv("BP_FILE");
-    break;
-  }
-
   /** Mount FS that includes the boot file */
+  bp = getenv("BP_FILE");
   if (bp) {
     if (parse_mount_spec(bp, &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
       printf("*** BP_FILE malformed, unable to parse\n");
@@ -384,28 +452,20 @@ mounts_init()
     }
   }
 
-  /** Likewise let's choose the appropriate BP_PARAM
-    * This will fallback to NVRAM/cmdline if DHCP doesn't work out
-    */
-  switch(init_mode) {
-  case INIT_MODE_CMDLINE:
-  case INIT_MODE_NVRAM:
-    bp = getenv("BP_PARAM");
-    break;
-  case INIT_MODE_DHCP:
-    bp = dhcp_runtime_cfg.cmdline;
-    if (!*bp) bp = getenv("BP_PARAM");
-    break;
-  }
-
   /** Mount FS that includes cmdline */
+  bp = getenv("BP_PARM");
   if (bp) {
     /** FIXME: actually parse this lol */
     if (!strncmp(bp, "INIT=", sizeof("INIT=")-1))
       bp += sizeof("INIT=")-1;
     
     if (parse_mount_spec(bp, &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
-      printf("*** BP_PARAM malformed, unable to parse\n");
+      printf("*** BP_PARM malformed, unable to parse\n");
+    }
+
+    if (ismounted(mntpt)) {
+      printf("*** %s already mounted, skipping\n", mntpt);
+      goto end;
     }
 
     if (do_mount(ip, src, mntpt, uid, gid, fs) < 0) {
@@ -413,8 +473,11 @@ mounts_init()
     }
   }
   else {
-    printf("*** No BP_PARAM. Missing from NVRAM and DHCP?\n");
+    printf("*** No BP_PARM. Missing from NVRAM and DHCP?\n");
   }
+
+end:
+  return;
 }
 
 /**
@@ -452,6 +515,8 @@ shell_init()
     printf("Unable to init RTEMS shell\n");
   
   printf("** End shell init\n");
+
+  rtems_termios_register_isig_handler(rtems_termios_posix_isig_handler);
 }
 
 /**

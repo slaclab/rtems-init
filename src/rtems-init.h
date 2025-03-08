@@ -19,6 +19,10 @@ struct dhcp_runtime_cfg
   char ntp1[128];
   char ntp2[128];
   char ntp3[128];
+  char dns1[128];
+  char dns2[128];
+  char dns3[128];
+  char domain[128];
   char hostname[128];
   char tftp_server[128];
   

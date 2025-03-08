@@ -175,3 +175,25 @@ parse_mount_spec(const char* mntblock, enum fstype* fstype, uint32_t* uid,
 
   return 0;
 }
+
+int
+ismounted(const char* mntpt)
+{
+  struct stat child;
+  if (stat(mntpt, &child) < 0)
+    return 0;
+
+  char par[256];
+  strncpySafe(par, mntpt, sizeof(par));
+
+  char* p = strrchr(par, '/');
+  if (!p)
+    return 0;
+  *p = 0;
+
+  struct stat parent;
+  if (stat(par, &parent) < 0)
+    return 0;
+
+  return child.st_dev != parent.st_dev;
+}

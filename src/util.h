@@ -50,7 +50,7 @@ enum fstype {
 extern int parse_mount_spec(const char* mntblock, enum fstype* fstype, uint32_t* uid,
   uint32_t* gid, char* ip, char* src, char* mntpt, char* file);
 
-/** Generic event API */
+extern int ismounted(const char* mntpt);
 
 typedef struct _event_s event_t;
 extern event_t* event_create();
