@@ -214,6 +214,13 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
           sizeof(dhcp_runtime_cfg.cmdline));
       }
     }
+    else if (strHasPrefix(*e, "posix_timezone")) {
+      if ((c = strpbrk(*e, "="))) {
+        ++c;
+        strncpySafe(dhcp_runtime_cfg.timezone, c,
+          sizeof(dhcp_runtime_cfg.timezone));
+      }
+    }
   }
   
   if (bound) {
@@ -243,8 +250,7 @@ static rtems_dhcpcd_hook dhcpcd_hook = {
 
 static char* dhcpcd_args[] = {
   "dhcpcd",
-  "--vendorclassid",
-  "udhcp",
+  "--vendorclassid=udhcp",
   NULL
 };
 
@@ -261,7 +267,7 @@ do_dhcp()
 
   /** Start dhcpcd for network configuration */
   rtems_dhcpcd_add_hook(&dhcpcd_hook);
-  rtems_dhcpcd_start(&dhcpcd_config);
+  rtems_dhcpcd_start(NULL);
 
   if (event_wait(dhcp_runtime_cfg.event, 300 * 1000) != ETIMEDOUT)
     event_destroy(dhcp_runtime_cfg.event);

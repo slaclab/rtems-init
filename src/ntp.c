@@ -74,9 +74,15 @@ void
 tz_init()
 {
   char buf[512];
-  if (read_file("/etc/localtime", buf, sizeof(buf)) < 0) {
-    printf("**** Could not read /etc/localtime\n");
-    return;
+  /** Use /etc/localtime if TZ not already supplied by dhcp */
+  if (!getenv("TZ") && !*getenv("TZ")) {
+    if (read_file("/etc/localtime", buf, sizeof(buf)) < 0) {
+      printf("**** Could not read /etc/localtime\n");
+      return;
+    }
+  }
+  else {
+    strncpySafe(buf, getenv("TZ"), sizeof(buf));
   }
   strtok(buf, ",");
   setenv("TZ", buf, 1);
