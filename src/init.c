@@ -241,6 +241,18 @@ static rtems_dhcpcd_hook dhcpcd_hook = {
   .name = "rtems-init"
 };
 
+static char* dhcpcd_args[] = {
+  "dhcpcd",
+  "--vendorclassid",
+  "udhcp",
+  NULL
+};
+
+static rtems_dhcpcd_config dhcpcd_config = {
+  .argc = RTEMS_BSD_ARGC(dhcpcd_args),
+  .argv = dhcpcd_args,
+};
+
 static void
 do_dhcp()
 {
@@ -249,7 +261,7 @@ do_dhcp()
 
   /** Start dhcpcd for network configuration */
   rtems_dhcpcd_add_hook(&dhcpcd_hook);
-  rtems_dhcpcd_start(NULL);
+  rtems_dhcpcd_start(&dhcpcd_config);
 
   if (event_wait(dhcp_runtime_cfg.event, 300 * 1000) != ETIMEDOUT)
     event_destroy(dhcp_runtime_cfg.event);
