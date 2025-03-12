@@ -421,6 +421,7 @@ do_mount(const char* ip, const char* src, const char* mntpt,
   char newip[128];
   struct sockaddr_in* si =
     (struct sockaddr_in*)ai->ai_addr;
+  si->sin_addr.s_addr = ntohl(si->sin_addr.s_addr);
   snprintf(newip, sizeof(newip), "%u.%u.%u.%u",
     (si->sin_addr.s_addr & 0xFF000000) >> 24,
     (si->sin_addr.s_addr & 0x00FF0000) >> 16,
@@ -455,6 +456,7 @@ mounts_init()
   uint32_t gid = 0, uid = 0;
   enum fstype fs;
   const char* bp = NULL;
+  char value[512];
 
   printf("** Setting up mounts\n");
 
@@ -479,6 +481,30 @@ mounts_init()
     
     if (parse_mount_spec(bp, &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
       printf("*** BP_PARM malformed, unable to parse\n");
+      goto cmdline_mnt;
+    }
+
+    if (ismounted(mntpt)) {
+      printf("*** %s already mounted, skipping\n", mntpt);
+      goto cmdline_mnt;
+    }
+
+    if (do_mount(ip, src, mntpt, uid, gid, fs) < 0) {
+      printf("*** Mount failed for %s:%s:%s\n", ip, src, mntpt);
+    }
+  }
+  else {
+    printf("*** No BP_PARM. Missing from NVRAM and DHCP?\n");
+  }
+
+cmdline_mnt:
+#if __i386__
+  /** On i386, parse mounts provided by BSP command line */
+  if (rtems_bsp_cmdline_get_param("--mount", value, sizeof(value))) {
+    if (parse_mount_spec(value + sizeof("--mount"), 
+        &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
+      printf("*** Unable to parse --mount\n");
+      goto end;
     }
 
     if (ismounted(mntpt)) {
@@ -490,9 +516,7 @@ mounts_init()
       printf("*** Mount failed for %s:%s:%s\n", ip, src, mntpt);
     }
   }
-  else {
-    printf("*** No BP_PARM. Missing from NVRAM and DHCP?\n");
-  }
+#endif
 
 end:
   return;
@@ -517,6 +541,12 @@ shell_init()
 {
   printf("** Begin shell init\n");
   rtems_shell_init_environment();
+
+  char val[256];
+  char* nd = rtems_bsp_cmdline_get_param("--cwd", val, sizeof(val));
+  if (nd) {
+    strcpy(rtems_shell_get_current_env()->cwd, nd + sizeof("--cwd"));
+  }
 
   for (int i = 0;;++i) {
     struct shell_cmd cmd = shell_cmds[i];

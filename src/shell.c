@@ -32,6 +32,7 @@ static int shell_setgid(int argc, char** argv);
 static int shell_getuid(int argc, char** argv);
 static int shell_getaddrinfo(int argc, char** argv);
 static int shell_apropos(int argc, char** argv);
+static int shell_test(int argc, char** argv);
 
 #define GEV_SHOW_USAGE "gevShow -- Display all GEV NVRAM parameters"
 #define GEV_GET_USAGE "gevGet paramName -- Display value of a specific GEV parameter"
@@ -47,7 +48,7 @@ struct shell_cmd shell_cmds[] =
   { "dlopen",     "rtl",    "",                   shell_dlopen },
   { "dlsym",      "rtl",    "",                   shell_dlsym },
   { "dlclose",    "rtl",    "",                   shell_dlclose },
-  { "dlsym",      "rtl",    "",                   shell_dlcall },
+  { "dlcall",     "rtl",    "",                   shell_dlcall },
   { "rtl",        "rtl",    "",                   rtems_rtl_shell_command },
   { "dbgstart",   "misc",   "",                   shell_debugger_start },
   { "dbgstop",    "misc",   "",                   shell_debugger_stop },
@@ -63,6 +64,7 @@ struct shell_cmd shell_cmds[] =
   { "setgid",     "misc",   "",                   shell_setgid },
   { "getaddrinfo","net",    "",                   shell_getaddrinfo },
   { "apropos",    "misc",   "",                   shell_apropos },
+  { "test",       "misc",   "",                   shell_test },
   { NULL,         NULL,     NULL,                 NULL },
 };
 
@@ -248,5 +250,28 @@ shell_apropos(int argc, char** argv)
     if (strstr(c->name, argv[0]))
       printf("%s\n", c->name);
   }
+  return 0;
+}
+
+static int
+shell_test(int argc, char** argv)
+{
+  void* h = dlopen("test.o", RTLD_NOW|RTLD_LOCAL);
+  if (!h) {
+    perror("load failed");
+    return -1;
+  }
+  printf("base image: %p\n", h);
+
+  void(*main)(int) = dlsym(h, "epicsMutexShowAll");
+  if (!main) {
+    perror("could not find main\n");
+    return -1;
+  }
+  printf("main: %p\n", main);
+
+  //char* args[] = {"iocsh", NULL};
+  main(1);
+
   return 0;
 }
