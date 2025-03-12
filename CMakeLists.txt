@@ -29,3 +29,9 @@ target_link_libraries(
 rtems_add_rootfs(
     rtems-init "${CMAKE_CURRENT_LIST_DIR}/rootfs"
 )
+
+rtems_add_executable(
+    test-dl-target
+    
+    src/test/test-dl-target.c
+)

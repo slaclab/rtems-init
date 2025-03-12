@@ -74,8 +74,7 @@ shell_debugger_start(int argc, char** argv)
   int opt = -1;
   char port[32] = "1234";
 
-  struct getopt_state s;
-  getopt_state_init(&s);
+  struct getopt_state s = {0};
   while ((opt = getopt_s(opt, argv, "p:h", &s)) != -1) {
     switch (opt) {
     case 'p':
@@ -210,6 +209,7 @@ single_getaddrinfo(const char* a)
   char newip[128];
   struct sockaddr_in* si =
     (struct sockaddr_in*)ai->ai_addr;
+  si->sin_addr.s_addr = ntohl(si->sin_addr.s_addr);
   snprintf(newip, sizeof(newip), "%u.%u.%u.%u",
     (si->sin_addr.s_addr & 0xFF000000) >> 24,
     (si->sin_addr.s_addr & 0x00FF0000) >> 16,
