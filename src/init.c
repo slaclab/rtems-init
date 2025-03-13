@@ -21,11 +21,13 @@
 #include <rtems/rtl/rtl.h>
 #include <rtems/rtl/rtl-shell.h>
 #include <rtems/telnetd.h>
+#include <rtems/imfs.h>
 #include <pthread.h>
 #include <netdb.h>
 #include <sys/socket.h>
 
 #include "rtems-init.h"
+#include "getopt_s.h"
 #include "util.h"
 
 static const char* BANNER =
@@ -457,6 +459,7 @@ mounts_init()
   enum fstype fs;
   const char* bp = NULL;
   char value[512];
+  int opt = 0;
 
   printf("** Setting up mounts\n");
 
@@ -498,6 +501,9 @@ mounts_init()
   }
 
 cmdline_mnt:
+
+  
+
 #if __i386__
   /** On i386, parse mounts provided by BSP command line */
   if (rtems_bsp_cmdline_get_param("--mount", value, sizeof(value))) {
@@ -507,13 +513,13 @@ cmdline_mnt:
       goto end;
     }
 
-    if (ismounted(mntpt)) {
-      printf("*** %s already mounted, skipping\n", mntpt);
+    if (ismounted(file)) {
+      printf("*** %s already mounted, skipping\n", file);
       goto end;
     }
 
-    if (do_mount(ip, src, mntpt, uid, gid, fs) < 0) {
-      printf("*** Mount failed for %s:%s:%s\n", ip, src, mntpt);
+    if (do_mount(ip, src, file, uid, gid, fs) < 0) {
+      printf("*** Mount failed for %s:%s:%s\n", ip, src, file);
     }
   }
 #endif
@@ -530,7 +536,9 @@ imfs_init()
 {
   /** Unpack the rootfs */
   setuid(0);
-  unpack_rootfs();
+  //unpack_rootfs();
+
+  rtems_tarfs_load("/", tar_rootfs, tar_rootfs_SIZE);
 }
 
 /**

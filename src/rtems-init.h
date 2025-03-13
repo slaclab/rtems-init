@@ -61,6 +61,9 @@ extern struct shell_cmd shell_cmds[];
 
 extern void unpack_rootfs();
 
+extern unsigned char tar_rootfs[];
+extern size_t tar_rootfs_SIZE;
+
 /********************************************************
  * nvram.c
  ********************************************************/
