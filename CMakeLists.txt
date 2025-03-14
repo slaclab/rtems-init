@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(rtems-init C)
+project(rtems-init C CXX)
+
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if (NOT DEFINED CMAKE_INSTALL_PREFIX)
     set(CMAKE_INSTALL_PREFIX "${RTEMS_TOP}/target/rtems/${RTEMS_ARCH}-rtems${RTEMS_VERSION}/${RTEMS_BSP}")
@@ -18,14 +20,18 @@ rtems_add_executable(
     src/getopt_s.c
     src/nvram.c
     src/ntp.c
+    src/dummy.cc
 )
 
-# Force linker language to C++ to bring in C++ STL symbols
-#set_target_properties(
-#    rtems-init PROPERTIES 
-#        #LINKER_LANGUAGE CXX
-#        LINK_FLAGS "-Wl,--no-gc-sections"
-#)
+get_target_property(CURRENT_LINK_FLAGS rtems-init LINK_FLAGS)
+
+# Force linker to emit symbols
+set_target_properties(
+    rtems-init rtems-init-exe PROPERTIES 
+        #LINKER_LANGUAGE CXX
+        #-Wl,--whole-archive -lrtemscpu -Wl,--no-whole-archive
+        LINK_FLAGS "-Wl,--no-gc-sections -Wl,--unresolved-symbols=ignore-all -lstdc++"
+)
 
 target_link_libraries(
     rtems-init
