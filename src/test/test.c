@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <ctype.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 #include "../util.h"
 #include "../util.c"

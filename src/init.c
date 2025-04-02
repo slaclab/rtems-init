@@ -534,6 +534,7 @@ end:
 void
 imfs_init()
 {
+  printf("Unpacking rootfs...\n");
   /** Unpack the rootfs */
   setuid(0);
   //unpack_rootfs();
