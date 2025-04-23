@@ -7,8 +7,9 @@ option(HOST_BUILD "Enable to build for host system" OFF)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-if (NOT DEFINED CMAKE_INSTALL_PREFIX)
-    set(CMAKE_INSTALL_PREFIX "${RTEMS_TOP}/target/rtems/${RTEMS_ARCH}-rtems${RTEMS_VERSION}/${RTEMS_BSP}")
+if (RTEMS_INSTALL)
+    set(SHARED_PREFIX OFF)
+    set(CMAKE_INSTALL_PREFIX "${RTEMS_TOP}/target/rtems/${RTEMS_ARCH}-rtems${RTEMS_TOOL_VERSION}/${RTEMS_BSP}")
 endif()
 
 ###################################################
