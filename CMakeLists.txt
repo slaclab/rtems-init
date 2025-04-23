@@ -18,6 +18,26 @@ endif()
 if (NOT HOST_BUILD)
     include(rtems-tools/cmake/rtems.cmake)
 
+    if ("${RTEMS_ARCH}" STREQUAL "powerpc")
+        ###################################################
+        # libbspExt
+        ###################################################
+        set(BSPEXT_SRCS
+            bspExt/isrWrap.c
+            bspExt/memProbe.c
+            bspExt/dabrBpnt.c
+            bspExt/bspExt.c
+        )
+
+        install(
+            FILES "bspExt/bspExt.h"
+                DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bsp"
+        )
+    endif()
+
+    ###################################################
+    # rtems-init
+    ###################################################
     rtems_add_executable(
         rtems-init 
         
@@ -29,6 +49,7 @@ if (NOT HOST_BUILD)
         src/nvram.c
         src/ntp.c
         src/dummy.cc
+        ${BSPEXT_SRCS}
     )
 
     get_target_property(CURRENT_LINK_FLAGS rtems-init LINK_FLAGS)

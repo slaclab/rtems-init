@@ -38,7 +38,7 @@ static const char* BANNER =
 "/\\__) || |____  / _____ \\\\ \\___/\\ |  | | \\ \\    | |   | |___ | | \\ / | |/\\__) |  \n"
 "\\____/ |______|/_/     \\\\_\\_____/ |  |_|  \\_\\   |_|   |_____||_|  V  |_|\\____/ \n"
 " National Accelerator Laboratory  | Real Time Executive for Multiprocessor Systems \n"
-"----------------------------> SLAC RTEMS Init System <---------------------------- \n";
+"---------------------------> SLAC RTEMS Distribution <---------------------------- \n";
 
 static void telnetd_init_command(char*, void*);
 

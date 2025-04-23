@@ -20,3 +20,13 @@ First, build the target using `ninja -C build-cmake/build-rtems6-pc686-qemu`
 Run with `./tests/run-qemu-i386.sh`
 
 This requires that you have `qemu-system-i386` installed on your system.
+
+# Components
+
+rtems-init (TODO RENAME ME!) is derived from ssrlApps.
+
+Some of the shared components:
+- libBspExt
+  - Extensions to the RTEMS ISR API
+- drvLan9118
+  - Raw UDP packet driver for the LCLS fast feedback system 
