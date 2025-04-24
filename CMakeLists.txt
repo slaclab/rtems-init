@@ -18,28 +18,11 @@ endif()
 if (NOT HOST_BUILD)
     include(rtems-tools/cmake/rtems.cmake)
 
-    if ("${RTEMS_ARCH}" STREQUAL "powerpc")
-        ###################################################
-        # libbspExt
-        ###################################################
-        set(BSPEXT_SRCS
-            bspExt/isrWrap.c
-            bspExt/memProbe.c
-            bspExt/dabrBpnt.c
-            bspExt/bspExt.c
-        )
-
-        install(
-            FILES "bspExt/bspExt.h"
-                DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bsp"
-        )
-    endif()
-
     ###################################################
     # rtems-init
     ###################################################
     rtems_add_executable(
-        rtems-init 
+        rtems-init
         
         src/init.c
         src/rtems-config.c
@@ -49,7 +32,7 @@ if (NOT HOST_BUILD)
         src/nvram.c
         src/ntp.c
         src/dummy.cc
-        ${BSPEXT_SRCS}
+        src/hack.c
     )
 
     get_target_property(CURRENT_LINK_FLAGS rtems-init LINK_FLAGS)
@@ -58,25 +41,50 @@ if (NOT HOST_BUILD)
     set_target_properties(
         rtems-init rtems-init-exe PROPERTIES 
             #LINKER_LANGUAGE CXX
-            #-Wl,--whole-archive -lrtemscpu -Wl,--no-whole-archive
-            LINK_FLAGS "-Wl,-u __symbolRefDummy -Wl,--whole-archive -Wl,--no-whole-archive"
-    )
-
-    target_link_libraries(
-        rtems-init
-        
-        rtemscxx rtemscpu rtemsbsp ntp telnetd bsd debugger tftpfs c m
+            LINK_FLAGS "-Wl,-u __symbolRefDummy -Wl,--no-undefined"
     )
 
     rtems_add_rootfs(
         rtems-init "${CMAKE_CURRENT_LIST_DIR}/rootfs" "TAR"
     )
+    
+    target_link_libraries(
+        rtems-init PRIVATE
+        
+        rtemscxx
+        rtemscpu
+        rtemsbsp
+        ntp
+        telnetd
+        bsd
+        debugger
+        tftpfs
+        c
+        m
+    )
 
-    #rtems_add_executable(
-    #    test-dl-target
-    #    
-    #    src/test/test-dl-target.c
-    #)
+    ###################################################
+    # libbspExt
+    ###################################################
+    if ("${RTEMS_ARCH}" STREQUAL "powerpc")
+        set(BSPEXT_SRCS
+            bspExt/isrWrap.c
+            bspExt/memProbe.c
+            bspExt/dabrBpnt.c
+            bspExt/bspExt.c
+        )
+
+        rtems_add_object(
+            bspExt rtems-init
+            
+            ${BSPEXT_SRCS}
+        )
+        
+        install(
+            FILES "bspExt/bspExt.h"
+                DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bsp"
+        )
+    endif()
 endif()
 
 ###################################################

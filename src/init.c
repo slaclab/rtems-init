@@ -308,7 +308,7 @@ network_init()
   printf("** Begin network init\n");
 
   // From EPICS base:
-#if defined(QEMU_FIXUPS) && defined(__i386__)
+#if defined(__i386__)
   // glorious hack to stub out useless EEPROM check
   // which takes sooooo longggg w/ QEMU
   // Writes a 'ret' instruction to immediatly return to the caller
@@ -552,7 +552,7 @@ shell_init()
   rtems_shell_init_environment();
 
   char val[256];
-  char* nd = rtems_bsp_cmdline_get_param("--cwd", val, sizeof(val));
+  const char* nd = rtems_bsp_cmdline_get_param("--cwd", val, sizeof(val));
   if (nd) {
     strcpy(rtems_shell_get_current_env()->cwd, nd + sizeof("--cwd"));
   }
