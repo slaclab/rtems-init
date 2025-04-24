@@ -59,7 +59,7 @@ if (NOT HOST_BUILD)
         rtems-init rtems-init-exe PROPERTIES 
             #LINKER_LANGUAGE CXX
             #-Wl,--whole-archive -lrtemscpu -Wl,--no-whole-archive
-            LINK_FLAGS "-Wl,--whole-archive -lstdc++ -Wl,--no-whole-archive"
+            LINK_FLAGS "-Wl,-u __symbolRefDummy -Wl,--whole-archive -Wl,--no-whole-archive"
     )
 
     target_link_libraries(

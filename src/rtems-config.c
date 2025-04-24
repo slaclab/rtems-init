@@ -8,14 +8,7 @@ extern void *POSIX_Init(void *argument);
 #define CONFIGURE_POSIX_INIT_THREAD_STACK_SIZE  (64*1024)
 
 #define CONFIGURE_MAXIMUM_PERIODS 	5
-/*
- * Override in configure/CONFIG_SITE.local with:
- *
- * OP_SYS_CFLAGS += -DCONFIGURE_MICROSECONDS_PER_TICK=1000
- */
-#ifndef CONFIGURE_MICROSECONDS_PER_TICK
 #define CONFIGURE_MICROSECONDS_PER_TICK 10000
-#endif
 #define CONFIGURE_MALLOC_STATISTICS     1
 /* MINIMUM_STACK_SIZE == 8K */
 #define CONFIGURE_MINIMUM_TASK_STACK_SIZE   65536
@@ -100,6 +93,8 @@ extern void *POSIX_Init(void *argument);
   &rtems_shell_NTPQ_Command, \
   &rtems_shell_SYSCTL_Command, \
   &rtems_shell_VMSTAT_Command, \
+  &rtems_shell_MALLOC_INFO_Command, \
+  &rtems_shell_RTRACE_Command, \
   &rtems_shell_ARP_Command
 #else // LEGACY_STACK:
 #define CONFIGURE_SHELL_USER_COMMANDS \
@@ -149,16 +144,7 @@ extern void *POSIX_Init(void *argument);
 
 #define CONFIGURE_MAXIMUM_DRIVERS 40
 
-/*
- * This should be made BSP dependent, not CPU dependent but I know of no
- * appropriate conditionals to use.
- * The new general time support makes including the RTC driver less important.
- */
-#if !defined(mpc604) && !defined(__mc68040__) && !defined(__mcf5200__) && \
-    !defined(mpc7455) && !defined(__arm__)  && !defined(__nios2__) && !defined(BSP_psim)
-    /* don't have RTC code */
 #define CONFIGURE_APPLICATION_NEEDS_RTC_DRIVER
-#endif
 
 #if defined(BSP_pc386) || defined(BSP_pc686)
 #define RTEMS_BSD_CONFIG_DOMAIN_PAGE_MBUFS_SIZE (64 * 1024 * 1024)

@@ -38,6 +38,12 @@ static int shell_test(int argc, char** argv);
 #define GEV_GET_USAGE "gevGet paramName -- Display value of a specific GEV parameter"
 #define NVRAM_SHOW_USAGE "nvramShow -- Display all NVRAM boot parameters"
 #define NVRAM_GET_USAGE "nvramGet paramName -- Display value of specific NVRAM boot parameter"
+#define APROPOS_USAGE "apropos term -- Search command list 'term'"
+#define SETUID_USAGE "setuid UID -- Sets the current effective UID"
+#define GETUID_USAGE "getuid -- Gets the current effective UID"
+#define SETGID_USAGE "setgid -- Sets the current effective GID"
+#define GETADDRINFO_USAGE "getaddrinfo loc -- Perform a dns lookup on 'loc'"
+#define DUMPENV_USAGE "dumpenv -- Dump the environment"
 
 /** !!! This is internal and I probably shouldn't do this! */
 extern rtems_shell_cmd_t* rtems_shell_first_cmd;
@@ -58,12 +64,12 @@ struct shell_cmd shell_cmds[] =
   { "gevShow",    "nvram",  GEV_SHOW_USAGE,       shell_gev_show },
   { "temp",       "misc",   "",                   shell_read_temp },
   { "ntpd",       "net",    "",                   rtems_ntpd_run },
-  { "dumpenv",    "misc",   "",                   shell_dumpenv },
-  { "setuid",     "misc",   "",                   shell_setuid },
-  { "getuid",     "misc",   "",                   shell_getuid },
-  { "setgid",     "misc",   "",                   shell_setgid },
-  { "getaddrinfo","net",    "",                   shell_getaddrinfo },
-  { "apropos",    "misc",   "",                   shell_apropos },
+  { "dumpenv",    "misc",   DUMPENV_USAGE,        shell_dumpenv },
+  { "setuid",     "misc",   SETUID_USAGE,         shell_setuid },
+  { "getuid",     "misc",   GETUID_USAGE,         shell_getuid },
+  { "setgid",     "misc",   SETGID_USAGE,         shell_setgid },
+  { "getaddrinfo","net",    GETADDRINFO_USAGE,    shell_getaddrinfo },
+  { "apropos",    "misc",   APROPOS_USAGE,        shell_apropos },
   { "test",       "misc",   "",                   shell_test },
   { NULL,         NULL,     NULL,                 NULL },
 };
@@ -247,7 +253,7 @@ shell_apropos(int argc, char** argv)
   }
 
   for (rtems_shell_cmd_t* c=rtems_shell_first_cmd; c; c=c->next) {
-    if (strstr(c->name, argv[0]))
+    if (strstr(c->name, argv[1]) || strstr(c->usage, argv[1]))
       printf("%s\n", c->name);
   }
   return 0;
