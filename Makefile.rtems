@@ -61,12 +61,17 @@ RTEMS_INIT_SRCS = \
 	src/shell.c \
 	src/util.c
 
-RTEMS_INIT_OBJS:=$(addprefix $(OBJDIR)/rtems-init.dir/,$(RTEMS_INIT_SRCS:.c=.o) rootfs.o)
-RTEMS_INIT_LDFLAGS = -lrtemscxx -lrtemscpu -lrtemsbsp -lntp -ltelnetd -lbsd -ldebugger -ltftpfs -lc -lm
+RTEMS_INIT_OBJS:=$(addprefix $(OBJDIR)/rtems-init.dir/,$(RTEMS_INIT_SRCS:.c=.o) rootfs.o extra-syms.o)
+RTEMS_INIT_LDFLAGS = -Wl,-u __symbolRefDummy -lrtemscxx -lrtemscpu -lrtemsbsp -lntp -ltelnetd -lbsd -ldebugger -ltftpfs -lc -lm
 
 $(OBJDIR)/rtems-init.dir/src/%.o: src/%.c
 	mkdir -p $(OBJDIR)/rtems-init.dir/src
 	$(CC) $(CFLAGS) -c -o $@ $^
+
+# Extra sym ref generation
+$(OBJDIR)/rtems-init.dir/extra-syms.o: | ./rtems-tools/sym/base.sym
+	./rtems-tools/mksyms.py -o $(@:.o=.c) -r ./rtems-tools/sym/base.sym
+	$(CC) $(CFLAGS) -c -o $@ $(@:.o=.c)
 
 # Rootfs generation
 $(OBJDIR)/rtems-init.dir/rootfs.o:
