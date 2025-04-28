@@ -1,8 +1,22 @@
-
+/**
+ * ----------------------------------------------------------------------------
+ * Company    : SLAC National Accelerator Laboratory
+ * ----------------------------------------------------------------------------
+ * Description: Utilities for interacting with NVRAM
+ * ----------------------------------------------------------------------------
+ * This file is part of 'rtems-init'. It is subject to the license terms in the
+ * LICENSE.txt file found in the top-level directory of this distribution,
+ * and at:
+ *    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+ * No part of 'rtems-init', including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ * ----------------------------------------------------------------------------
+ **/
 #include <rtems.h>
 #include <bsp.h>
-
 #include <rtems/bspcmdline.h>
+
 #include <stddef.h>
 #include <stdint.h>
 #include <ctype.h>

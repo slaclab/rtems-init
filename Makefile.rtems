@@ -41,11 +41,28 @@ CFLAGS += -Wno-strict-prototypes -Wno-missing-prototypes -DBSP_$(RTEMS_BSP)=1
 
 OBJDIR=build/$(T_A)
 
+# Network stack
+ifeq ($(RTEMS_BSP),uC5282)
+NETWORK_STACK=LEGACY
+else
+NETWORK_STACK=BSD
+endif
+
 # Install locations
 PREFIX=$(RTEMS_ROOT)/$(RTEMS_TARGET)/$(RTEMS_BSP)
 INCDIR=$(PREFIX)/lib/include
 LIBDIR=$(PREFIX)/lib
 BINDIR=$(PREFIX)/bin
+
+ifeq ($(NETWORK_STACK),BSD)
+CFLAGS += -DRTEMS_LIBBSD_STACK=1
+else
+CFLAGS += -DRTEMS_LEGACY_STACK=1
+endif
+
+ifneq ($(RTEMS_BSP),uC5282)
+HAVE_DEBUGGER=YES
+endif
 
 ########################################################
 # rtems-init
@@ -55,33 +72,48 @@ RTEMS_INIT_SRCS = \
 	src/getopt_s.c \
 	src/hack.c \
 	src/init.c \
-	src/ntp.c \
 	src/nvram.c \
 	src/rtems-config.c \
 	src/shell.c \
-	src/util.c
+	src/util.c \
+	src/net.c
+
+
+ifeq ($(NETWORK_STACK),BSD)
+RTEMS_INIT_SRCS += src/net_bsd.c
+RTEMS_INIT_LIBS += -lbsd
+else
+RTEMS_INIT_SRCS += src/net_legacy.c
+RTEMS_INIT_LIBS += -lnfs -lnetworking
+endif
+
+ifeq ($(HAVE_DEBUGGER),YES)
+RTEMS_INIT_LIBS += -ldebugger
+RTEMS_INIT_CFLAGS += -DHAVE_DEBUGGER=1
+endif
 
 RTEMS_INIT_OBJS:=$(addprefix $(OBJDIR)/rtems-init.dir/,$(RTEMS_INIT_SRCS:.c=.o) rootfs.o extra-syms.o)
-RTEMS_INIT_LDFLAGS = -Wl,-u __symbolRefDummy -lrtemscxx -lrtemscpu -lrtemsbsp -lntp -ltelnetd -lbsd -ldebugger -ltftpfs -lc -lm
+RTEMS_INIT_LDFLAGS = -Wl,-u __symbolRefDummy -lrtemscxx -lrtemscpu -lrtemsbsp -lntp -ltelnetd -ltftpfs $(RTEMS_INIT_LIBS) -lc -lm
+RTEMS_INIT_CFLAGS += $(CFLAGS)
 
 $(OBJDIR)/rtems-init.dir/src/%.o: src/%.c
 	mkdir -p $(OBJDIR)/rtems-init.dir/src
-	$(CC) $(CFLAGS) -c -o $@ $^
+	$(CC) $(RTEMS_INIT_CFLAGS) -c -o $@ $^
 
 # Extra sym ref generation
 $(OBJDIR)/rtems-init.dir/extra-syms.o: | ./rtems-tools/sym/base.sym
 	./rtems-tools/mksyms.py -o $(@:.o=.c) -r ./rtems-tools/sym/base.sym
-	$(CC) $(CFLAGS) -c -o $@ $(@:.o=.c)
+	$(CC) $(RTEMS_INIT_CFLAGS) -c -o $@ $(@:.o=.c)
 
 # Rootfs generation
 $(OBJDIR)/rtems-init.dir/rootfs.o:
 	./rtems-tools/mkrootfs.py -o $(@:.o=.S) -t -i rootfs -m "BSP_LIBS=" -m "TOOLCHAIN_LIBS="
-	$(CC) $(CFLAGS) -c -o $@ $(@:.o=.S)
+	$(CC) $(RTEMS_INIT_CFLAGS) -c -o $@ $(@:.o=.S)
 
 # Stage 1 link
 $(OBJDIR)/rtems-init: $(RTEMS_INIT_OBJS)
 	@echo "Linking stage 1 executable $@"
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(RTEMS_INIT_LDFLAGS)
+	$(CC) $(RTEMS_INIT_CFLAGS) -o $@ $^ $(LDFLAGS) $(RTEMS_INIT_LDFLAGS)
 
 # Symbol generation for stage 2
 $(OBJDIR)/rtems-init-syms.o: $(OBJDIR)/rtems-init
@@ -90,7 +122,7 @@ $(OBJDIR)/rtems-init-syms.o: $(OBJDIR)/rtems-init
 # Stage 2 link
 $(OBJDIR)/rtems-init.exe: $(RTEMS_INIT_OBJS) $(OBJDIR)/rtems-init-syms.o
 	@echo "Linking stage 2 executable $@"
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(RTEMS_INIT_LDFLAGS)
+	$(CC) $(RTEMS_INIT_CFLAGS) -o $@ $^ $(LDFLAGS) $(RTEMS_INIT_LDFLAGS)
 
 # Bootfile generation
 $(OBJDIR)/rtems-init.boot: $(OBJDIR)/rtems-init.exe

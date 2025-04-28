@@ -1,61 +1,27 @@
-
+/**
+ * ----------------------------------------------------------------------------
+ * Company    : SLAC National Accelerator Laboratory
+ * ----------------------------------------------------------------------------
+ * Description: Configuration for RTEMS
+ * ----------------------------------------------------------------------------
+ * This file is part of 'rtems-init'. It is subject to the license terms in the
+ * LICENSE.txt file found in the top-level directory of this distribution,
+ * and at:
+ *    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+ * No part of 'rtems-init', including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ * ----------------------------------------------------------------------------
+ **/
 #include <rtems.h>
 
 extern void *POSIX_Init(void *argument);
 
-#define CONFIGURE_POSIX_INIT_THREAD_TABLE
-#define CONFIGURE_POSIX_INIT_THREAD_ENTRY_POINT POSIX_Init
-#define CONFIGURE_POSIX_INIT_THREAD_STACK_SIZE  (64*1024)
+/****************************************************************************\
+ * RTEMS configuration
+\****************************************************************************/
 
-#define CONFIGURE_MAXIMUM_PERIODS 	5
-#define CONFIGURE_MICROSECONDS_PER_TICK 10000
-#define CONFIGURE_MALLOC_STATISTICS     1
-/* MINIMUM_STACK_SIZE == 8K */
-#define CONFIGURE_MINIMUM_TASK_STACK_SIZE   65536
-#define CONFIGURE_EXTRA_TASK_STACKS         (512 * RTEMS_MINIMUM_STACK_SIZE)
-
-#if __RTEMS_MAJOR__ > 4
-#define CONFIGURE_FILESYSTEM_DEVFS
-#define CONFIGURE_FILESYSTEM_TFTPFS
-#endif
-#define CONFIGURE_FILESYSTEM_NFS
-#define CONFIGURE_FILESYSTEM_IMFS
-
-#ifndef RTEMS_LEGACY_STACK
-#define CONFIGURE_USE_IMFS_AS_BASE_FILESYSTEM
-/*
- * Configure LibBSD.
- */
-//#define RTEMS_BSD_CONFIG_NET_PF_UNIX
-//#define RTEMS_BSD_CONFIG_NET_IF_BRIDGE
-//#define RTEMS_BSD_CONFIG_NET_IF_LAGG
-//#define RTEMS_BSD_CONFIG_NET_IF_VLAN
-#define RTEMS_BSD_CONFIG_BSP_CONFIG
-#define RTEMS_BSD_CONFIG_INIT
-#include <machine/rtems-bsd-config.h>
-#endif // not LEGACY_STACK
-
-/*
- * Configure RTEMS.
- */
-#define CONFIGURE_APPLICATION_NEEDS_CLOCK_DRIVER
-#define CONFIGURE_APPLICATION_NEEDS_CONSOLE_DRIVER
-#define CONFIGURE_APPLICATION_NEEDS_STUB_DRIVER
-#define CONFIGURE_APPLICATION_NEEDS_ZERO_DRIVER
-
-/* Note: The select() system call can only be used with the first FD_SETSIZE
- *       File Descriptors (newlib default is 64).  Beginning RTEMS 5.1, FDs are
- *       allocated sequentially.  So changing this CONFIGURE parameter such
- *       that CONFIGURE_MAXIMUM_FILE_DESCRIPTORS >= FD_SETSIZE will likely
- *       cause applications making select() calls to fault at some point.
- *
- *       IOC core components (libca and RSRV) do not make select() calls.
- *
- *       Applications and driver code using poll() or other socket
- *       multiplexers do not share this limitation.
- *
- *       cf. https://github.com/epics-base/epics-base/issues/300
- */
+/** Match value in EPICS base (64): */
 #define CONFIGURE_MAXIMUM_FILE_DESCRIPTORS 64
 #define CONFIGURE_IMFS_ENABLE_MKFIFO    2
 
@@ -73,7 +39,49 @@ extern void *POSIX_Init(void *argument);
 #define CONFIGURE_BDBUF_MAX_READ_AHEAD_BLOCKS 4
 #define CONFIGURE_BDBUF_CACHE_MEMORY_SIZE (1 * 1024 * 1024)
 
-#if __RTEMS_MAJOR__ > 4
+#define CONFIGURE_POSIX_INIT_THREAD_TABLE
+#define CONFIGURE_POSIX_INIT_THREAD_ENTRY_POINT POSIX_Init
+#define CONFIGURE_POSIX_INIT_THREAD_STACK_SIZE  (64*1024)
+
+#define CONFIGURE_MAXIMUM_PERIODS 	5
+#define CONFIGURE_MICROSECONDS_PER_TICK 10000
+#define CONFIGURE_MALLOC_STATISTICS     1
+/* MINIMUM_STACK_SIZE == 8K */
+#define CONFIGURE_MINIMUM_TASK_STACK_SIZE   65536
+#define CONFIGURE_EXTRA_TASK_STACKS         (512 * RTEMS_MINIMUM_STACK_SIZE)
+
+/** Enable various filesystem backends */;
+#define CONFIGURE_FILESYSTEM_DEVFS
+#define CONFIGURE_FILESYSTEM_TFTPFS
+#define CONFIGURE_FILESYSTEM_NFS
+#define CONFIGURE_FILESYSTEM_IMFS
+
+/****************************************************************************\
+ * libbsd configuration
+\****************************************************************************/
+
+#define RTEMS_BSD_CONFIG_BSP_CONFIG
+#define RTEMS_BSD_CONFIG_SERVICE_TELNETD
+#define RTEMS_BSD_CONFIG_TELNETD_STACK_SIZE (16 * 1024)
+#define RTEMS_BSD_CONFIG_FIREWALL_PF
+
+#ifndef RTEMS_LEGACY_STACK
+
+#define CONFIGURE_USE_IMFS_AS_BASE_FILESYSTEM
+//#define RTEMS_BSD_CONFIG_NET_PF_UNIX
+//#define RTEMS_BSD_CONFIG_NET_IF_BRIDGE
+//#define RTEMS_BSD_CONFIG_NET_IF_LAGG
+//#define RTEMS_BSD_CONFIG_NET_IF_VLAN
+#define RTEMS_BSD_CONFIG_BSP_CONFIG
+#define RTEMS_BSD_CONFIG_INIT
+#include <machine/rtems-bsd-config.h>
+
+#endif // !RTEMS_LEGACY_STACK
+
+/****************************************************************************\
+ * Shell commands
+\****************************************************************************/
+
 #define CONFIGURE_SHELL_COMMANDS_INIT
 
 #include <bsp/irq-info.h>
@@ -129,22 +137,21 @@ extern void *POSIX_Init(void *argument);
 #include <rtems/shellconfig-net-services.h>
 #include <rtems/shellconfig.h>
 
-#define RTEMS_BSD_CONFIG_BSP_CONFIG
-#define RTEMS_BSD_CONFIG_SERVICE_TELNETD
-#define RTEMS_BSD_CONFIG_TELNETD_STACK_SIZE (16 * 1024)
-#define RTEMS_BSD_CONFIG_SERVICE_FTPD
-#define RTEMS_BSD_CONFIG_FIREWALL_PF
-#else // __RTEMS_MAJOR__ > 4
-#include <rtems/shellconfig.h>
-#endif // __RTEMS_MAJOR__ > 4
-
-#if __RTEMS_MAJOR__ < 5 // still needed in Version 4?
-#define CONFIGURE_MAXIMUM_TASKS             rtems_resource_unlimited(30)
-#endif
+/****************************************************************************\
+ * Drivers + RTEMS confdefs
+\****************************************************************************/
 
 #define CONFIGURE_MAXIMUM_DRIVERS 40
 
+#define CONFIGURE_APPLICATION_NEEDS_CLOCK_DRIVER
+#define CONFIGURE_APPLICATION_NEEDS_CONSOLE_DRIVER
+#define CONFIGURE_APPLICATION_NEEDS_STUB_DRIVER
+#define CONFIGURE_APPLICATION_NEEDS_ZERO_DRIVER
+
+/** uC5282 has no RTC driver */
+#ifndef BSP_uC5282
 #define CONFIGURE_APPLICATION_NEEDS_RTC_DRIVER
+#endif
 
 #if defined(BSP_pc386) || defined(BSP_pc686)
 #define RTEMS_BSD_CONFIG_DOMAIN_PAGE_MBUFS_SIZE (64 * 1024 * 1024)

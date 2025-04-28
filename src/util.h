@@ -1,3 +1,18 @@
+/**
+ * ----------------------------------------------------------------------------
+ * Company    : SLAC National Accelerator Laboratory
+ * ----------------------------------------------------------------------------
+ * Description: Common utilities
+ * ----------------------------------------------------------------------------
+ * This file is part of 'rtems-init'. It is subject to the license terms in the
+ * LICENSE.txt file found in the top-level directory of this distribution,
+ * and at:
+ *    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+ * No part of 'rtems-init', including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ * ----------------------------------------------------------------------------
+ **/
 #pragma once
 
 #include <stdlib.h>
@@ -58,3 +73,5 @@ extern int event_wait(event_t* ev, uint64_t timeout_ms);
 extern void event_signal(event_t* ev);
 extern void event_destroy(event_t* ev);
 
+extern void bsp_cmdline_get_param(const char* param, char* val, size_t vlen);
+extern int bsp_cmdline_has_param(const char* param);

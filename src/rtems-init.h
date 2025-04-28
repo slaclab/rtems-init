@@ -1,4 +1,18 @@
-
+/**
+ * ----------------------------------------------------------------------------
+ * Company    : SLAC National Accelerator Laboratory
+ * ----------------------------------------------------------------------------
+ * Description: rtems-init main header
+ * ----------------------------------------------------------------------------
+ * This file is part of 'rtems-init'. It is subject to the license terms in the
+ * LICENSE.txt file found in the top-level directory of this distribution,
+ * and at:
+ *    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+ * No part of 'rtems-init', including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ * ----------------------------------------------------------------------------
+ **/
 #pragma once
 
 #include <rtems/shell.h>
@@ -78,8 +92,13 @@ extern int shell_gev_get(int argc, char** argv);
 extern int shell_gev_show(int argc, char** argv);
 
 /********************************************************
- * ntp.c
+ * net.c
  ********************************************************/
 
-extern int ntp_init();
-extern void ntp_shutdown();
+extern int generate_resolv_conf();
+
+/********************************************************
+ * net_bsd.c OR net_legacy.c
+ ********************************************************/
+
+extern void network_init();

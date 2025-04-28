@@ -1,5 +1,20 @@
-
-#include "util.h"
+/**
+ * ----------------------------------------------------------------------------
+ * Company    : SLAC National Accelerator Laboratory
+ * ----------------------------------------------------------------------------
+ * Description: Common utilities
+ * ----------------------------------------------------------------------------
+ * This file is part of 'rtems-init'. It is subject to the license terms in the
+ * LICENSE.txt file found in the top-level directory of this distribution,
+ * and at:
+ *    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+ * No part of 'rtems-init', including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ * ----------------------------------------------------------------------------
+ **/
+#include <rtems.h>
+#include <rtems/bspcmdline.h>
 
 #include <sys/errno.h>
 #include <pthread.h>
@@ -7,6 +22,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "util.h"
 
 struct _event_s
 {
@@ -196,4 +213,16 @@ ismounted(const char* mntpt)
     return 0;
 
   return child.st_dev != parent.st_dev;
+}
+
+void
+bsp_cmdline_get_param(const char* param, char* val, size_t vlen)
+{
+  rtems_bsp_cmdline_get_param(param, val, vlen);
+}
+
+int
+bsp_cmdline_has_param(const char* param)
+{
+  return NULL != rtems_bsp_cmdline_get_param_raw(param);
 }

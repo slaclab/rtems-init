@@ -1,16 +1,31 @@
 /**
- * Misc. shell utilities
- */
+ * ----------------------------------------------------------------------------
+ * Company    : SLAC National Accelerator Laboratory
+ * ----------------------------------------------------------------------------
+ * Description: Misc shell utilities
+ * ----------------------------------------------------------------------------
+ * This file is part of 'rtems-init'. It is subject to the license terms in the
+ * LICENSE.txt file found in the top-level directory of this distribution,
+ * and at:
+ *    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+ * No part of 'rtems-init', including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ * ----------------------------------------------------------------------------
+ **/
 #include <rtems.h>
 #include <rtems/shell.h>
-#include <dlfcn.h>
 #include <rtems/rtl/dlfcn-shell.h>
 #include <rtems/rtl/rtl-shell.h>
 #include <rtems/ntpq.h>
 #include <rtems/ntpd.h>
+
+#ifdef HAVE_DEBUGGER
 #include <rtems/rtems-debugger.h>
 #include <rtems/rtems-debugger-remote-tcp.h>
-#include <machine/rtems-bsd-commands.h>
+#endif
+
+#include <dlfcn.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -77,6 +92,7 @@ struct shell_cmd shell_cmds[] =
 static int
 shell_debugger_start(int argc, char** argv)
 {
+#ifdef HAVE_DEBUGGER
   int opt = -1;
   char port[32] = "1234";
 
@@ -101,17 +117,25 @@ shell_debugger_start(int argc, char** argv)
     return -1;
   }
   return 0;
+#else
+  fprintf(stderr, "Failed to start debugger: unsupported BSP\n");
+  return -1;
+#endif
 }
 
 static int
 shell_debugger_stop(int argc, char** argv)
 {
+#ifdef HAVE_DEBUGGER
   if (!rtems_debugger_running()) {
     fprintf(stderr, "debugger is not running\n");
     return -1;
   }
   rtems_debugger_stop();
   return 0;
+#else
+  return -1;
+#endif
 }
 
 
