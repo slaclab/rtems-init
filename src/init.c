@@ -238,8 +238,6 @@ imfs_init()
   printf("Unpacking rootfs...\n");
   /** Unpack the rootfs */
   setuid(0);
-  //unpack_rootfs();
-
   rtems_tarfs_load("/", tar_rootfs, tar_rootfs_SIZE);
 }
 

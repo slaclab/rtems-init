@@ -39,8 +39,6 @@ include $(RTEMS_CUSTOM)
 CFLAGS += $(CPU_CFLAGS) $(CPU_DEFINES) $(CFLAGS_OPTIMIZE_V)
 CFLAGS += -Wno-strict-prototypes -Wno-missing-prototypes -DBSP_$(RTEMS_BSP)=1
 
-OBJDIR=build/$(T_A)
-
 # Network stack
 ifeq ($(RTEMS_BSP),uC5282)
 NETWORK_STACK=LEGACY
@@ -48,11 +46,13 @@ else
 NETWORK_STACK=BSD
 endif
 
-# Install locations
+# Important locations
 PREFIX=$(RTEMS_ROOT)/$(RTEMS_TARGET)/$(RTEMS_BSP)
 INCDIR=$(PREFIX)/lib/include
 LIBDIR=$(PREFIX)/lib
 BINDIR=$(PREFIX)/bin
+SRCDIR=$(abspath .)
+OBJDIR=build/$(T_A)
 
 ifeq ($(NETWORK_STACK),BSD)
 CFLAGS += -DRTEMS_LIBBSD_STACK=1
@@ -166,6 +166,20 @@ ifeq ($(RTEMS_ARCH),powerpc)
 EXTRA_TARGETS+=$(OBJDIR)/bspExt.obj
 EXTRA_INSTALL_TARGETS += bspExt-install
 endif
+
+########################################################
+# Cexpsh
+########################################################
+
+# Derived from ssrlApps Makefile
+$(OBJDIR)/cexpsh.dir/Makefile:
+	mkdir -p `dirname $@`
+	cd `dirname $@` && \
+	pwd && \
+	unset CC CFLAGS CXX CPPFLAGS LDFLAGS && \
+	$(SRCDIR)/cexpsh/configure --host=$(RTEMS_ARCH)-$(RTEMS_VER) --disable-nls --prefix=$(PREFIX) --with-newlib --disable-multilib --with-rtems-top=$(RTEMS_ROOT) --enable-rtemsbsp=$(RTEMS_BSP)
+
+cexpsh-makefile: $(OBJDIR)/cexpsh.dir/Makefile
 
 ########################################################
 # Top-level rules
