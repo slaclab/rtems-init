@@ -195,3 +195,8 @@ clean:
 .PHONY: all clean
 
 endif
+
+list-targets:
+	@echo "Available targets:"
+	@$(foreach bsp,$(BSPS), \
+		echo "  $(bsp)";)
