@@ -171,8 +171,12 @@ endif
 # Cexpsh
 ########################################################
 
+$(SRCDIR)/cexpsh/configure:
+	cd `dirname $@` && \
+	autoreconf -i
+
 # Derived from ssrlApps Makefile
-$(OBJDIR)/cexpsh.dir/Makefile:
+$(OBJDIR)/cexpsh.dir/Makefile: $(SRCDIR)/cexpsh/configure
 	mkdir -p `dirname $@`
 	cd `dirname $@` && \
 	pwd && \
