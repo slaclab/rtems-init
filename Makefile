@@ -192,7 +192,14 @@ install: $(EXTRA_INSTALL_TARGETS)
 clean:
 	rm -rf $(OBJDIR)
 
-.PHONY: all clean
+# This is for testing
+LOC=/sdf/group/cds/sw/epics/users/lorelli/rtems/6.1
+copy: $(OBJDIR)/rtems-init.boot
+	mkdir -p $(LOC)/target/rtems/$(RTEMS_ARCH)-$(RTEMS_VER)/$(RTEMS_BSP)/bin/
+	cp -v $(OBJDIR)/rtems-init.boot $(LOC)/target/rtems/$(RTEMS_ARCH)-$(RTEMS_VER)/$(RTEMS_BSP)/bin/
+	cp -v $(OBJDIR)/rtems-init.exe $(LOC)/target/rtems/$(RTEMS_ARCH)-$(RTEMS_VER)/$(RTEMS_BSP)/bin/
+
+.PHONY: all clean install copy
 
 endif
 
