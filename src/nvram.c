@@ -48,7 +48,7 @@ parse_boot_string(const char* pboot, const char* pend, const char* param,
     int quoted = 0;
 
     /** Skip leading space */
-    while (*pboot && isspace(*pboot) && pboot < pend)
+    while (*pboot && isspace((int)*pboot) && pboot < pend)
       pboot++;
     
     /** End of nvram */
@@ -107,7 +107,7 @@ parse_boot_foreach(const char* pboot, const char* pend,
     int quoted = 0;
 
     /** Skip leading space */
-    while (*pboot && isspace(*pboot) && pboot < pend)
+    while (*pboot && isspace((int)*pboot) && pboot < pend)
       pboot++;
     
     /** End of nvram */

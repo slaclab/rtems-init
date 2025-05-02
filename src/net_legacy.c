@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "rtems-init.h"
+
 /****************************************************************************\
  * ne2kpci hackery.
  * This code was pulled from EPICS base as a workaround for testing inside
@@ -84,6 +86,11 @@ static struct rtems_bsdnet_ifconfig ne2k_driver_config = {
 #endif
 
 struct rtems_bsdnet_config rtems_bsdnet_config = {
+  .network_task_priority = 10,
+  .bootp = rtems_bsdnet_do_bootp,
+  .mbuf_bytecount = RTEMS_NETWORK_CONFIG_MBUF_SPACE * 1024,
+  .mbuf_cluster_bytecount = RTEMS_NETWORK_CONFIG_CLUSTER_SPACE * 1024,
+  .domainname = "slac.stanford.edu",
 #ifdef __i386__
   .ifconfig = &ne2k_driver_config,
 #else
