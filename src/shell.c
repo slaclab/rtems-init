@@ -19,6 +19,7 @@
 #include <rtems/rtl/rtl-shell.h>
 #include <rtems/ntpq.h>
 #include <rtems/ntpd.h>
+#include <bsp.h>
 
 #ifdef HAVE_DEBUGGER
 #include <rtems/rtems-debugger.h>
@@ -48,6 +49,7 @@ static int shell_getuid(int argc, char** argv);
 static int shell_getaddrinfo(int argc, char** argv);
 static int shell_apropos(int argc, char** argv);
 static int shell_test(int argc, char** argv);
+static int shell_sysReset(int argc, char** argv);
 
 #define GEV_SHOW_USAGE "gevShow -- Display all GEV NVRAM parameters"
 #define GEV_GET_USAGE "gevGet paramName -- Display value of a specific GEV parameter"
@@ -303,5 +305,11 @@ shell_test(int argc, char** argv)
   //char* args[] = {"iocsh", NULL};
   main(1);
 
+  return 0;
+}
+
+static int
+shell_sysReset(int argc, char** argv)
+{
   return 0;
 }

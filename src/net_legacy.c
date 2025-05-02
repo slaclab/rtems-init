@@ -66,13 +66,9 @@ rtems_ne2kpci_driver_attach (struct rtems_bsdnet_ifconfig *config, int attach)
 }
 #endif
 
-extern int rtems_bsdnet_loopattach(struct rtems_bsdnet_ifconfig*, int);
 static struct rtems_bsdnet_ifconfig loopback_config = {
-  "lo0",
+  RTEMS_BSP_NETWORK_DRIVER_NAME,
   RTEMS_BSP_NETWORK_DRIVER_ATTACH,
-  NULL,
-  "127.0.0.1",
-  "255.0.0.0",
 };
 
 #ifdef __i386__

@@ -28,10 +28,30 @@
 #define MOTLOAD_OFFSET 0x7000
 #define MOTLOAD_HEADER_SIZE 0xF8
 #define MOTLOAD_GEV_SIZE 3592
+#endif
+
 /** Nvram signature/version; pulled from rtems-netboot */
 #define NVRAM_SIGN 0xcafe
 #define NVRAM_SIGN_SIZE (2*sizeof(uint16_t))
-#endif
+
+/** List of valid NVRAM params, for systems where we can't arbitrarily iterate them */
+static const char* valid_params[] =
+{
+  "BP_MYIP",
+  "BP_GTWY",
+  "BP_MYMK",
+  "BP_MYNM",
+  "BP_MYDN",
+  "BP_LOGH",
+  "BP_DNS1",
+  "BP_DNS2",
+  "BP_DNS3",
+  "BP_NTP1",
+  "BP_NTP2",
+  "BP_NTP3",
+  "BP_ENBL",
+  "BP_DELY",
+};
 
 /**
  * nvram boot parameters are set by Till's netboot system. Unlike GEVs,
@@ -150,32 +170,57 @@ parse_boot_foreach(const char* pboot, const char* pend,
 int
 boot_param(const char* param, char* result, size_t resultsz)
 {
+#ifdef BSP_uC5282
+  const char* s = bsp_getbenv(param);
+  strncpySafe(result, s, resultsz);
+  return 0;
+#else
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
   const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
   pboot += NVRAM_SIGN_SIZE;
   return parse_boot_string(pboot, pend, param, result, resultsz);
+#endif
 }
 
 int
 boot_param_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
 {
+#ifdef BSP_uC5282
+const char* s;
+for (int i = 0; i < sizeof(valid_params) / sizeof(valid_params[0]); ++i)
+  if ((s = bsp_getbenv(valid_params[i])))
+    parsed(valid_params[i], strlen(valid_params[i]), s, strlen(s));
+return 0;
+#else
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
   const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
   pboot += NVRAM_SIGN_SIZE;
   return parse_boot_foreach(pboot, pend, parsed);
+#endif
 }
 
 int
 boot_param_show_all()
 {
+#ifdef BSP_uC5282
+  const char* s;
+  for (int i = 0; i < sizeof(valid_params) / sizeof(valid_params[0]); ++i)
+    if ((s = bsp_getbenv(valid_params[i])))
+      printf("%s=%s\n", valid_params[i], s);
+  return 0;
+#else
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
   const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
   pboot += NVRAM_SIGN_SIZE;
   /** Boot params are simply a string, can just directly print */
   puts(pboot);
   return 0;
+#endif
 }
 
+#endif // HAVE_NVRAM
+
+#ifdef HAVE_MOTLOAD
 /**
  * Lookup a single nvram gev parameter based on name. Not very efficient, I know.
  */
@@ -255,8 +300,7 @@ gev_show()
   return 0;
 }
 
-
-#endif
+#endif // HAVE_MOTLOAD
 
 int
 nvram_get_boot_param(const char* param, char* res, size_t n)
@@ -312,7 +356,7 @@ shell_gev_get(int argc, char** argv)
     return -1;
   }
 
-#ifdef HAVE_NVRAM
+#ifdef HAVE_MOTLOAD
   char buf[512];
   if (gev_param(argv[1], buf, sizeof(buf)) < 0) {
     fprintf(stderr, "unable to find gev nvram parameter %s\n", argv[1]);
@@ -329,7 +373,7 @@ shell_gev_get(int argc, char** argv)
 int
 shell_gev_show(int argc, char** argv)
 {
-#ifdef HAVE_NVRAM
+#ifdef HAVE_MOTLOAD
   gev_show();
 #else
   fprintf(stderr, "nvram unimplemented for this BSP\n");
