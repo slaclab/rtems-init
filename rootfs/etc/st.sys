@@ -1,0 +1,4 @@
+# useful abbreviations
+ld    = cexpModuleLoad
+unld  = cexpModuleUnload
+lsmod = cexpModuleInfo
