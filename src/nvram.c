@@ -305,7 +305,7 @@ gev_show()
 int
 nvram_get_boot_param(const char* param, char* res, size_t n)
 {
-#ifdef HAVE_MOTLOAD
+#ifdef HAVE_NVRAM
   return boot_param(param, res, n);
 #else
   return -1;

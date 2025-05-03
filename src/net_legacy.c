@@ -105,6 +105,11 @@ network_init()
 
   rtems_bsdnet_initialize_network();
   rtems_bsdnet_show_if_stats();
-  
+
+  printf("*** Starting ntpd\n");
+
+  if (ntp_init() != 0)
+    printf("**** NTP init failed; it will now be disabled\n");
+
   printf("** End legacy network init\n");
 }

@@ -23,6 +23,9 @@
 # define RTEMS_NETWORK_CONFIG_CLUSTER_SPACE 5120
 # define HAVE_NVRAM
 # define HAVE_MOTLOAD
+#elif defined(__i386__)
+# define RTEMS_NETWORK_CONFIG_MBUF_SPACE 2048
+# define RTEMS_NETWORK_CONFIG_CLUSTER_SPACE 5120
 #elif defined(BSP_uC5282)
 # define RTEMS_NETWORK_CONFIG_MBUF_SPACE 200
 # define RTEMS_NETWORK_CONFIG_CLUSTER_SPACE 350
@@ -103,6 +106,8 @@ extern int shell_gev_show(int argc, char** argv);
  ********************************************************/
 
 extern int generate_resolv_conf();
+extern void tz_init();
+extern int ntp_init();
 
 /********************************************************
  * net_bsd.c OR net_legacy.c

@@ -29,7 +29,7 @@ strHasPrefix(const char* str, const char* pfx) {
 /** Safe strncpy */
 static inline char*
 strncpySafe(char* str, const char* src, size_t len) {
-  strncpy(str, src, len);
+  strncpy(str, src, len-1);
   str[len-1] = 0;
   return str;
 }
