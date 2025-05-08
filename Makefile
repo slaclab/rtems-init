@@ -92,11 +92,6 @@ RTEMS_INIT_LIBS += -ldebugger
 RTEMS_INIT_CFLAGS += -DHAVE_DEBUGGER=1
 endif
 
-# Temp, for testing cexpsh
-RTEMS_INIT_CFLAGS += -I$(RTEMS_TOP)/target/cexp/$(RTEMS_ARCH)-$(RTEMS_VER)/$(RTEMS_BSP)/include
-RTEMS_INIT_CFLAGS += -L$(RTEMS_TOP)/target/cexp/$(RTEMS_ARCH)-$(RTEMS_VER)/$(RTEMS_BSP)/lib
-RTEMS_INIT_LIBS += -lcexp -lpmbfd -lpmelf -ltecla -lspencer_regexp
-
 RTEMS_INIT_OBJS:=$(addprefix $(OBJDIR)/rtems-init.dir/,$(RTEMS_INIT_SRCS:.c=.o) rootfs.o extra-syms.o)
 RTEMS_INIT_LDFLAGS = -Wl,-u __symbolRefDummy -lrtemscxx -lrtemscpu -lrtemsbsp -lntp -ltelnetd -ltftpfs $(RTEMS_INIT_LIBS) -lc -lm
 RTEMS_INIT_CFLAGS += $(CFLAGS)
@@ -186,16 +181,9 @@ $(OBJDIR)/cexpsh.dir/Makefile: $(SRCDIR)/cexpsh/configure
 	cd `dirname $@` && \
 	pwd && \
 	unset CC CFLAGS CXX CPPFLAGS LDFLAGS && \
-	$(SRCDIR)/cexpsh/configure --host=$(RTEMS_ARCH)-$(RTEMS_VER) --target=$(RTEMS_ARCH)-$(RTEMS_VER) --disable-nls --prefix=$(RTEMS_TOP) --with-newlib --disable-multilib --with-rtems-top=$(RTEMS_ROOT) --enable-rtemsbsp=$(RTEMS_BSP)
+	$(SRCDIR)/cexpsh/configure --host=$(RTEMS_ARCH)-$(RTEMS_VER) --disable-nls --prefix=$(PREFIX) --with-newlib --disable-multilib --with-rtems-top=$(RTEMS_ROOT) --enable-rtemsbsp=$(RTEMS_BSP)
 
-cexpsh: $(OBJDIR)/cexpsh.dir/Makefile
-	make -C $(OBJDIR)/cexpsh.dir
-
-cexpsh-install:
-	make -C $(OBJDIR)/cexpsh.dir install
-
-#EXTRA_TARGETS += cexpsh
-#EXTRA_INSTALL_TARGETS += cexpsh-install
+cexpsh-makefile: $(OBJDIR)/cexpsh.dir/Makefile
 
 ########################################################
 # Top-level rules

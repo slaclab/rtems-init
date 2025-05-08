@@ -21,7 +21,6 @@
 #include <rtems/rtl/rtl.h>
 #include <rtems/rtl/rtl-shell.h>
 #include <rtems/imfs.h>
-#include <cexp.h>
 
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -203,6 +202,9 @@ mounts_init()
   }
 
 cmdline_mnt:
+
+  
+
 #if __i386__
   /** On i386, parse mounts provided by BSP command line */
   if (rtems_bsp_cmdline_get_param("--mount", value, sizeof(value))) {
@@ -221,9 +223,10 @@ cmdline_mnt:
       printf("*** Mount failed for %s:%s:%s\n", ip, src, file);
     }
   }
+#endif
+
 end:
   return;
-#endif
 }
 
 /**
@@ -259,26 +262,13 @@ shell_init()
     rtems_shell_add_cmd(cmd.cmd, cmd.topic, cmd.usage, cmd.command);
   }
 
-  char hostnam[256];
-  gethostname(hostnam, sizeof(hostnam));
+  rtems_status_code r;
+  r = rtems_shell_init(
+    "SHLL", 0, 100, "/dev/console", true, false, NULL
+  );
 
-  cexpInit(NULL);
-
-  char* args[] = {
-    "cexpsh",
-    "-I",
-    "/etc/st.sys",
-    NULL
-  };
-  cexp_main(sizeof(args)/sizeof(*args)-1, args);
-
-  //rtems_status_code r;
-  //r = rtems_shell_init(
-  //  "SHLL", 0, 100, "/dev/console", true, false, NULL
-  //);
-
-  //if (r != RTEMS_SUCCESSFUL)
-  //  printf("Unable to init RTEMS shell\n");
+  if (r != RTEMS_SUCCESSFUL)
+    printf("Unable to init RTEMS shell\n");
   
   printf("** End shell init\n");
 
