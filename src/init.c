@@ -35,14 +35,13 @@
 #include "util.h"
 
 static const char* BANNER =
-"  ____  _           _      _____      _____   _______  _____  __     __   ____ \n"
-" / __ \\| |         / \\    / ___ \\ |  |  __ \\ |___ ___||  ___||  \\   /  | / __ \\  \n"
-"| (  \\/| |        /   \\  / /   \\/ |  | |__| |   | |   | |___ |   \\ /   || (__\\/  \n"
-" ============================O    |  |  _  /    | |   |  ___|| |\\ V /| | \\__ \\ \n"
-"/\\__) || |____  / _____ \\\\ \\___/\\ |  | | \\ \\    | |   | |___ | | \\ / | |/\\__) |  \n"
-"\\____/ |______|/_/     \\\\_\\_____/ |  |_|  \\_\\   |_|   |_____||_|  V  |_|\\____/ \n"
-" National Accelerator Laboratory  | Real Time Executive for Multiprocessor Systems \n"
-"---------------------------> SLAC RTEMS Distribution <---------------------------- \n";
+"\e[31m  ____  _           _      _____      _____   _______  _____  __     __   ____ \e[0m\n"
+"\e[31m / __ \\| |         / \\    / ___ \\ |  |  __ \\ |___ ___||  ___||  \\   /  | / __ \\  \e[0m\n"
+"\e[31m| (  \\/| |        /   \\  / /   \\/ |  | |__| |   | |   | |___ |   \\ /   || (__\\/  \e[0m\n"
+"\e[31m ============================O    |  |  _  /    | |   |  ___|| |\\ V /| | \\__ \\ \e[0m\n"
+"\e[31m/\\__) || |____  / _____ \\\\ \\___/\\ |  | | \\ \\    | |   | |___ | | \\ / | |/\\__) |  \e[0m\n"
+"\e[31m\\____/ |______|/_/     \\\\_\\_____/ |  |_|  \\_\\   |_|   |_____||_|  V  |_|\\____/ \e[0m\n"
+"\e[31m National Accelerator Laboratory  | Real Time Executive for Multiprocessor Systems \e[0m\n";
 
 struct dhcp_runtime_cfg dhcp_runtime_cfg;
 
@@ -58,13 +57,13 @@ serial_init()
 {
   struct termios tio;
   if (tcgetattr(fileno(stdin), &tio) < 0) {
-    perror("tcgetattr failed");
+    perror("tcgetattr");
   }
   
   tio.c_iflag &= (IXOFF|IXON|IXANY|IGNBRK);
   tio.c_iflag |= BRKINT;
   if (tcsetattr(fileno(stdin), TCSANOW, &tio) < 0) {
-    perror("tcsetattr failed");
+    perror("tcsetattr");
   }
   
   /** Display our really cool banner */
