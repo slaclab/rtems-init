@@ -1,5 +1,5 @@
 [submodule "rtems-tools"]
-	path = rtems-tools
+	path = tools
 	url = git@github.com:JJL772/rtems-tools.git
 [submodule "bspExt"]
 	path = bspExt
