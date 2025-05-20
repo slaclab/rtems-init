@@ -5,7 +5,7 @@ endif
 
 TARGETS?=$(shell ls $(RTEMS_TOP)/target/rtems/lib/pkgconfig/ | grep -Po "(?<=(powerpc|arm|i386|m68k)-).*" | cut -d '.' -f 1 | tr '\n' ' ')
 
-TARGETS+=rtems6-pc686-qemu
+TARGETS+=rtems7-pc686-qemu
 
 $(info TARGETS=$(TARGETS))
 
@@ -17,7 +17,7 @@ endif
 
 configure:
 	$(foreach target,$(TARGETS),cmake -Bbuild-cmake/build-$(target) -DRTEMS_TOP=$(RTEMS_TOP) \
-		-DCMAKE_TOOLCHAIN_FILE=rtems-tools/toolchains/$(target).cmake $(EXTRA_ARGS);)
+		-DCMAKE_TOOLCHAIN_FILE=tools/toolchains/$(target).cmake $(EXTRA_ARGS);)
 	cmake -Bbuild-cmake/build-linux-x86_64 -DRTEMS_TOP=$(RTEMS_TOP) -DHOST_BUILD=ON $(EXTRA_ARGS)
 
 build:

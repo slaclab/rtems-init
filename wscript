@@ -6,7 +6,7 @@ from waflib import Task
 from tools.waftools import (
     get_includes, get_install_prefix, get_lib_paths,
     build_module, install_headers, install_libs,
-    check_headers, has_c_header, has_lib)
+    check_headers, has_c_header, has_lib, add_rootfs)
 import os
 
 ROOT = os.getcwd()
@@ -331,23 +331,23 @@ def build_cexp(bld):
         f'CEXP_TEXT_REGION_SIZE={_get_text_seg_size(bld)}'
     ]
     
-    # todo: if use_tecla
+    # TODO: if use_tecla:
     if True:
         sources += [f'{dir}/teclastuff.c']
         libs += ['tecla']
         includes += [f'{dir}/libtecla']
         defines += ['USETECLA=1']
     
-    # todo: if enable_loader
+    # TODO: if enable_loader:
     if True:
         sources += [f'{dir}/bfdstuff.c']
         defines += ['USELOADER=1']
-    elif False: # todo: use_elfsyms
+    elif False: # TODO: use_elfsyms:
         sources += [f'{dir}/elfsyms.c', f'{dir}/elfdlmap.c']
     else:
         sources += [f'{dir}/noloader.c']
     
-    # todo: if use_pmbfd
+    # TODO: if use_pmbfd:
     if True:
         libs += ['pmbfd']
         defines += ['USEPMBFD=1', 'USE_PMBFD=1']
@@ -397,12 +397,14 @@ def build_cexp(bld):
 
 def build_rtems_init(bld):
     """
-    Build the rtems-init packae (GeSys reimplementation)
+    Build the rtems-init package (GeSys reimplementation)
     """
-    dir = f'{bld.top_dir}/rtems-init'
+    dir = f'{bld.top_dir}'
     defines = []
-    includes = ['.', 'fddsjkfjsdgksdjk']
+    includes = ['.']
     libs = ['dl']
+
+    add_rootfs(bld, f'{dir}/rootfs')
 
     sources = [
         'src/getopt_s.c',
@@ -413,6 +415,7 @@ def build_rtems_init(bld):
         'src/rtems-config.c',
         'src/util.c',
         'src/shell.c',
+        f'{bld.out_dir}/rootfs.S'
     ]
     
     if bld.env.NETWORKING_STACK == 'bsd':
@@ -420,7 +423,7 @@ def build_rtems_init(bld):
         libs += ['bsd']
     elif bld.env.NETWORKING_STACK == 'legacy':
         sources += ['src/net_legacy.c']
-        libs += ['networking', ]
+        libs += ['networking']
 
     # Other core RTEMS components
     libs += ['rtemscxx', 'rtemscpu', 'rtemsbsp']
@@ -434,11 +437,12 @@ def build_rtems_init(bld):
 
     bld(
         target='rtems-init',
-        features='c cprogram',
+        features='asm c cprogram',
         source=sources,
         use=libs,
         includes=includes + get_includes(bld),
-        defines=defines
+        defines=defines,
+        deep_inputs=True,
     )
 
 

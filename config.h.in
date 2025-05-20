@@ -1,0 +1,61 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
+#undef RTEMS_VERSION_LATER_THAN
+#define RTEMS_VERSION_LATER_THAN(ma,mi,re) \
+	(    __RTEMS_MAJOR__  > (ma)	\
+	 || (__RTEMS_MAJOR__ == (ma) && __RTEMS_MINOR__  > (mi))	\
+	 || (__RTEMS_MAJOR__ == (ma) && __RTEMS_MINOR__ == (mi) && __RTEMS_REVISION__ > (re)) \
+    )
+
+
+#undef RTEMS_VERSION_ATLEAST
+#define RTEMS_VERSION_ATLEAST(ma,mi,re) \
+    (    __RTEMS_MAJOR__  > (ma)	\
+	|| (__RTEMS_MAJOR__ == (ma) && __RTEMS_MINOR__  > (mi))	\
+	|| (__RTEMS_MAJOR__ == (ma) && __RTEMS_MINOR__ == (mi) && __RTEMS_REVISION__ >= (re)) \
+	)
+
+#undef HAVE_SYS_MMAN_H
+#define HAVE_SYS_MMAN_H @HAVE_SYS_MMAN_H@
+
+#undef HAVE_STRINGS_H
+#define HAVE_STRINGS_H @HAVE_STRINGS_H@
+
+#undef HAVE_SYS_SELECT_H
+#define HAVE_SYS_SELECT_H @HAVE_SYS_SELECT_H@
+
+#undef HAVE_SYS_TERMIOS_H
+#define HAVE_SYS_TERMIOS_H @HAVE_SYS_TERMIOS_H@
+
+#undef HAVE_TERMIOS_H
+#define HAVE_TERMIOS_H @HAVE_TERMIOS_H@
+
+#undef HAVE_NCURSES_TERM_H
+#define HAVE_NCURSES_TERM_H @HAVE_NCURSES_TERM_H@
+
+#undef HAVE_NCURSES_CURSES_H
+#define HAVE_NCURSES_CURSES_H @HAVE_NCURSES_CURSES_H@
+
+#undef HAVE_SYS_FEATURES_H
+#define HAVE_SYS_FEATURES_H @HAVE_SYS_FEATURES_H@
+
+#undef HAVE_LINK_H
+#define HAVE_LINK_H @HAVE_LINK_H@
+
+#undef HAVE_PTHREADS
+#define HAVE_PTHREADS @HAVE_PTHREADS@
+
+#undef HAVE_RTEMS_CACHE_H
+#define HAVE_RTEMS_CACHE_H @HAVE_RTEMS_CACHE_H@
+
+#undef HAVE_RTEMS_H
+#define HAVE_RTEMS_H @HAVE_RTEMS_H@
+
+#undef HAVE_TYPE_UINT32_T
+#define HAVE_TYPE_UINT32_T 1
+
+#undef HAVE_TECLA
+#define HAVE_TECLA 1
+
+#endif // _CONFIG_H_ 
