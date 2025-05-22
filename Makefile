@@ -101,13 +101,13 @@ $(OBJDIR)/rtems-init.dir/src/%.o: src/%.c
 	$(CC) $(RTEMS_INIT_CFLAGS) -c -o $@ $^
 
 # Extra sym ref generation
-$(OBJDIR)/rtems-init.dir/extra-syms.o: | ./rtems-tools/sym/base.sym
-	./rtems-tools/mksyms.py -o $(@:.o=.c) -r ./rtems-tools/sym/base.sym
+$(OBJDIR)/rtems-init.dir/extra-syms.o: | ./tools/sym/base.sym
+	./tools/mksyms.py -o $(@:.o=.c) -r ./tools/sym/base.sym
 	$(CC) $(RTEMS_INIT_CFLAGS) -c -o $@ $(@:.o=.c)
 
 # Rootfs generation
 $(OBJDIR)/rtems-init.dir/rootfs.o:
-	./rtems-tools/mkrootfs.py -o $(@:.o=.S) -t -i rootfs -m "BSP_LIBS=" -m "TOOLCHAIN_LIBS="
+	./tools/mkrootfs.py -o $(@:.o=.S) -t -i rootfs -m "BSP_LIBS=" -m "TOOLCHAIN_LIBS="
 	$(CC) $(RTEMS_INIT_CFLAGS) -c -o $@ $(@:.o=.S)
 
 # Stage 1 link
