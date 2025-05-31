@@ -154,7 +154,7 @@ $(OBJDIR)/bspExt.dir/bspExt/%.o: bspExt/%.c
 
 # Object linking
 $(OBJDIR)/bspExt.obj: $(BSPEXT_OBJS) | $(OBJDIR)/rtems-init.exe
-	rtems-ld -O rap -e rtemsEntryPoint -o $@ -L$(RTEMS_ROOT)/$(RTEMS_TARGET)/$(RTEMS_BSP)/lib -b $(OBJDIR)/rtems-init.exe -lrtemsbsp -lrtemscpu $^
+	rtems-ld -O rap -e rtemsEntryPoint -C $(RTEMS_TARGET)-gcc -o $@ -L$(RTEMS_ROOT)/$(RTEMS_TARGET)/$(RTEMS_BSP)/lib -b $(OBJDIR)/rtems-init.exe -lrtemsbsp -lrtemscpu $^
 
 bspExt-install: $(OBJDIR)/bspExt.obj
 	mkdir -p $(INCDIR)/bsp

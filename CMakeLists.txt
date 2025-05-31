@@ -359,6 +359,7 @@ if (ENABLE_LOADER)
     list(
         APPEND CEXP_DEFINES
         "USELOADER=1"
+        "USE_LOADER=1"
     )
 elseif (USE_ELFSYMS)
     list(
