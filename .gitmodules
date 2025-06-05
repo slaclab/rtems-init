@@ -7,9 +7,6 @@
 [submodule "rtems_waf"]
 	path = rtems_waf
 	url = https://github.com/RTEMS/rtems_waf.git
-[submodule "m4"]
-	path = m4
-	url = git@github.com:slaclab/rtems-ac-macros.git
 [submodule "cexp"]
 	path = cexp
 	url = git@github.com:slaclab/cexpsh.git

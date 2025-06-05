@@ -15,15 +15,15 @@ ifndef T_A
 
 all:
 	$(foreach bsp,$(BSPS), \
-		$(MAKE) -f Makefile.rtems T_A=$(bsp);)
+		$(MAKE) -f Makefile T_A=$(bsp);)
 
 clean:
 	$(foreach bsp,$(BSPS), \
-		$(MAKE) -f Makefile.rtems T_A=$(bsp) clean;)
+		$(MAKE) -f Makefile T_A=$(bsp) clean;)
 
 install:
 	$(foreach bsp,$(BSPS), \
-		$(MAKE) -f Makefile.rtems T_A=$(bsp) install;)
+		$(MAKE) -f Makefile T_A=$(bsp) install;)
 
 .PHONY: install all clean
 
