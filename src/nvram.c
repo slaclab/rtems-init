@@ -174,11 +174,13 @@ boot_param(const char* param, char* result, size_t resultsz)
   const char* s = bsp_getbenv(param);
   strncpySafe(result, s, resultsz);
   return 0;
-#else
+#elif defined(BSP_NVRAM_BOOTPARMS_START)
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
   const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
   pboot += NVRAM_SIGN_SIZE;
   return parse_boot_string(pboot, pend, param, result, resultsz);
+#else
+  return 1;
 #endif
 }
 
@@ -191,11 +193,13 @@ for (int i = 0; i < sizeof(valid_params) / sizeof(valid_params[0]); ++i)
   if ((s = bsp_getbenv(valid_params[i])))
     parsed(valid_params[i], strlen(valid_params[i]), s, strlen(s));
 return 0;
-#else
+#elif defined(BSP_NVRAM_BOOTPARMS_START)
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
   const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
   pboot += NVRAM_SIGN_SIZE;
   return parse_boot_foreach(pboot, pend, parsed);
+#else
+  return 1;
 #endif
 }
 
@@ -208,13 +212,15 @@ boot_param_show_all()
     if ((s = bsp_getbenv(valid_params[i])))
       printf("%s=%s\n", valid_params[i], s);
   return 0;
-#else
+#elif defined(BSP_NVRAM_BOOTPARMS_START)
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
   const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
   pboot += NVRAM_SIGN_SIZE;
   /** Boot params are simply a string, can just directly print */
   puts(pboot);
   return 0;
+#else
+  return 1;
 #endif
 }
 
@@ -227,6 +233,7 @@ boot_param_show_all()
 int
 gev_param(const char* param, char* result, size_t resultsz)
 {
+#ifdef BSP_NVRAM_BASE_ADDR
   const char* pgev = 
     (char*)(BSP_NVRAM_BASE_ADDR + MOTLOAD_OFFSET + MOTLOAD_HEADER_SIZE);
   const char* const pgevend = pgev + MOTLOAD_GEV_SIZE;
@@ -272,6 +279,9 @@ gev_param(const char* param, char* result, size_t resultsz)
     }
   }
   return -1;
+#else
+  return -1;
+#endif
 }
 
 /**
@@ -280,6 +290,7 @@ gev_param(const char* param, char* result, size_t resultsz)
 int
 gev_show()
 {
+#ifdef BSP_NVRAM_BASE_ADDR
   const char* pgev = 
     (char*)(BSP_NVRAM_BASE_ADDR + MOTLOAD_OFFSET + MOTLOAD_HEADER_SIZE);
   const char* const pgevend = pgev + MOTLOAD_GEV_SIZE;
@@ -298,6 +309,9 @@ gev_show()
       pgev++;
   }
   return 0;
+#else
+  return -1;
+#endif
 }
 
 #endif // HAVE_MOTLOAD
