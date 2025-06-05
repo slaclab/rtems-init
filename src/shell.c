@@ -36,6 +36,13 @@
 #include <rtems/rtems-debugger-remote-tcp.h>
 #endif
 
+#ifdef HAVE_LUA
+#include "lua.h"
+#define main shell_lua
+#include "lua.c"
+#undef main
+#endif
+
 #include <dlfcn.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -74,6 +81,7 @@ static int shell_pci_probe(int argc, char** argv);
 #define GETADDRINFO_USAGE "getaddrinfo loc -- Perform a dns lookup on 'loc'"
 #define DUMPENV_USAGE "dumpenv -- Dump the environment"
 #define LSPCI_USAGE "lspci -- Probe PCI buses"
+#define LUA_USAGE "lua -- Start interactive lua interpreter"
 
 /** !!! This is internal and I probably shouldn't do this! */
 extern rtems_shell_cmd_t* rtems_shell_first_cmd;
@@ -103,6 +111,9 @@ struct shell_cmd shell_cmds[] =
   { "test",       "misc",   "",                   shell_test },
   { "getifaddrs", "net",    "",                   shell_getifaddrs },
   { "lspci",      "misc",   "",                   shell_pci_probe },
+#ifdef HAVE_LUA
+  { "lua",        "misc",   LUA_USAGE,            shell_lua },
+#endif
   { NULL,         NULL,     NULL,                 NULL },
 };
 

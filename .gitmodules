@@ -7,3 +7,6 @@
 [submodule "cexp"]
 	path = cexp
 	url = git@github.com:slaclab/cexpsh.git
+[submodule "lua"]
+	path = lua
+	url = https://github.com/lua/lua.git

@@ -49,8 +49,12 @@ set(RTEMS_INIT_SRCS
     src/hack.c
     src/net.c
 
+    # Tests
     src/test/irq-tst.c
     src/test/nfs-perf.c
+
+    # Lua
+    lua/onelua.c
 )
     
 if ("${RTEMS_NETWORKING_STACK}" STREQUAL "LEGACY")
@@ -100,6 +104,20 @@ target_link_libraries(
     tftpfs
     c
     m
+)
+
+target_compile_definitions(
+    rtems-init PRIVATE
+    
+    MAKE_LIB=1
+    LUA_USE_POSIX=1
+    HAVE_LUA=1
+)
+
+target_include_directories(
+    rtems-init PRIVATE
+    
+    lua
 )
 
 ###################################################
