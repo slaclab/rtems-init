@@ -285,26 +285,30 @@ shell_apropos(int argc, char** argv)
   return 0;
 }
 
+/** tests **/
+extern int legacy_irq_tst();
+extern int irq_tst();
+
+static struct bsp_test {
+  const char* name;
+  const char* desc;
+  int (*pfn)();
+} s_tests[] = {
+  {"legacy_irq", "Legacy BSP IRQ API", legacy_irq_tst},
+  {"irq", "New IRQ API", irq_tst},
+};
+
 static int
 shell_test(int argc, char** argv)
 {
-  void* h = dlopen("test.o", RTLD_NOW|RTLD_LOCAL);
-  if (!h) {
-    perror("load failed");
-    return -1;
+  puts(ANSI_BLUE "===== BSP Test Suite =====" ANSI_RESET);
+  for (int i = 0; i < sizeof(s_tests)/sizeof(*s_tests); ++i) {
+    printf("--> Running %s\n", s_tests[i].desc);
+    if (s_tests[i].pfn() != 0)
+      puts(ANSI_RED "  *** Failed" ANSI_RESET);
+    else
+      puts(ANSI_GREEN "  *** Passed" ANSI_RESET);
   }
-  printf("base image: %p\n", h);
-
-  void(*main)(int) = dlsym(h, "epicsMutexShowAll");
-  if (!main) {
-    perror("could not find main\n");
-    return -1;
-  }
-  printf("main: %p\n", main);
-
-  //char* args[] = {"iocsh", NULL};
-  main(1);
-
   return 0;
 }
 

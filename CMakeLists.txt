@@ -47,7 +47,8 @@ set(RTEMS_INIT_SRCS
     src/getopt_s.c
     src/nvram.c
     src/hack.c
-    src/net.c
+
+    src/test/irq-tst.c
 )
     
 if ("${RTEMS_NETWORKING_STACK}" STREQUAL "LEGACY")

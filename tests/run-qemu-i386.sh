@@ -3,7 +3,7 @@
 set -e
 cd "$(dirname "${BASH_SOURCE[0]}")/../"
 
-KERNEL="build/i386-rtems6-pc686/rtems-init.exe"
+KERNEL="build-cmake/build-rtems7-pc686-qemu/rtems-init.exe"
 
 . tests/conf.local.sh
 

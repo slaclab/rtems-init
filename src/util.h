@@ -20,6 +20,13 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+/** ANSI escape codes */
+#define ANSI_RED "\e[31m"
+#define ANSI_GREEN "\e[32m"
+#define ANSI_YELLOW "\e[33m"
+#define ANSI_RESET "\e[0m"
+#define ANSI_BLUE "\e[34m"
+
 /** Returns true (1) if the string starts with the prefix */
 static inline int
 strHasPrefix(const char* str, const char* pfx) {
