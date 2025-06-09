@@ -3,6 +3,13 @@
 rtems-init performs necessary setup (DHCP, NTP), and provides a framework for system configuration.
 This is mostly targeted at EPICS IOCs, particularly ones that need additional system configuration outside of EPICS base itself.
 
+## Configuring
+
+Makefile.cmake is a utility makefile that will configure the build for you.
+```
+make -f Makefile.cmake TARGETS="rtems7-uC5282 rtems7-beatnik rtems7-mvme3100" PREFIX=/sdf/group/cds/sw/epics/users/lorelli/rtems/7.0
+```
+
 ## Boot Process
 
 Boot parameters are supplied by two sources: NVRAM and DHCP.
