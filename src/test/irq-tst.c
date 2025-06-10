@@ -6,9 +6,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#ifdef BSP_beatnik
 #define RTC_IRQ (BSP_IRQ_GPP_0 + 3)
 #define WDNMI_IRQ (BSP_IRQ_GPP_0 + 6)
 #define TEST_IRQ RTC_IRQ
+#endif
 
 static int s_counter = 0;
 
@@ -22,7 +24,8 @@ static struct rtc_save {
 static void
 dummy_irq()
 {
-  ++s_counter;
+  if (++s_counter == 5)
+    BSP_disable_irq_at_pic(TEST_IRQ);
 #ifdef BSP_beatnik
   /* Read the FLAGS register to clear the interrupt */
   uint8_t fl = *(volatile uint8_t*)(RTC_BASE_ADDR + 0x7FF0);
@@ -66,6 +69,7 @@ restore_rtc()
 int
 legacy_irq_tst()
 {
+#ifdef BSP_beatnik
   int ret = 0;
   s_counter = 0;
 
@@ -77,20 +81,22 @@ legacy_irq_tst()
     printf("BSP_install_rtems_irq_handler: failed\n");
     return 1;
   }
-  
-  config_rtc();
-  
+
+  BSP_enable_irq_at_pic(TEST_IRQ);
+
   if (BSP_irq_set_priority(TEST_IRQ, 2) != 0) {
     printf("BSP_irq_set_priority: failed\n");
     ret = 1;
   }
-  
+
+  config_rtc();
+
   sleep(10);
 
   restore_rtc();
-  
-  if (s_counter == 0) {
-    printf("counter was not >0!\n");
+
+  if (s_counter != 5) {
+    printf("s_counter was %d, but we expected 5!\n", s_counter);
     ret = 1;
   }
 
@@ -98,48 +104,73 @@ legacy_irq_tst()
     printf("BSP_remove_rtems_irq_handler: failed\n");
     return 1;
   }
-  
+
   return ret;
+#else
+  printf("legacy_irq_test not implemented for this platform\n");
+  return 1;
+#endif
 }
 
+/* New IRQ */
 static void
 new_irq(void* arg)
 {
-  ++s_counter;
+  if (++s_counter == 5)
+    rtems_interrupt_vector_disable(TEST_IRQ);
+
+#ifdef BSP_beatnik
+  /* Read the FLAGS register to clear the interrupt */
+  uint8_t fl = *(volatile uint8_t*)(RTC_BASE_ADDR + 0x7FF0);
+#endif
 }
 
 /* New style IRQ test using the rtems_interrupt API */
 int
 irq_tst()
 {
+#ifdef BSP_beatnik
   int ret = 0, r = 0;
   s_counter = 0;
+  
+  r = rtems_interrupt_handler_install(TEST_IRQ, "TIM",
+    RTEMS_INTERRUPT_UNIQUE, new_irq, NULL);
 
-  if (RTEMS_SUCCESSFUL != (r = rtems_interrupt_handler_install(TEST_IRQ, "TIM",
-    RTEMS_INTERRUPT_SHARED, new_irq, NULL)))
-  {
+  if (r != RTEMS_SUCCESSFUL) {
     printf("rtems_interrupt_handler_install: %d\n", r);
     return 1;
   }
-
+  
   if (rtems_interrupt_set_priority(TEST_IRQ, 2) != RTEMS_SUCCESSFUL) {
-    printf("rtems_interrupt_handler_remove: failed\n");
+    printf("rtems_interrupt_set_priority: failed\n");
     ret = 1;
   }
+  
+  if (rtems_interrupt_vector_enable(TEST_IRQ) != RTEMS_SUCCESSFUL) {
+    printf("rtems_interrupt_vector_enable: failed\n");
+    ret = 1;
+  }
+
+  config_rtc();
 
   sleep(10);
 
-  if (s_counter == 0) {
-    printf("counter was not >0!\n");
+  restore_rtc();
+
+  if (s_counter != 5) {
+    printf("s_counter was %d, but we expected 5!\n", s_counter);
     ret = 1;
   }
 
-  if (rtems_interrupt_handler_remove(TEST_IRQ, new_irq, NULL) != 
-    RTEMS_SUCCESSFUL)
-  {
+  r = rtems_interrupt_handler_remove(TEST_IRQ, new_irq, NULL);
+  if (r != RTEMS_SUCCESSFUL) {
     printf("rtems_interrupt_handler_remove: failed\n");
     return 1;
   }
 
   return ret;
+#else
+  printf("irq_tst not implemented for this platform\n");
+  return 1;
+#endif
 }
