@@ -50,6 +50,7 @@ set(RTEMS_INIT_SRCS
     src/net.c
 
     src/test/irq-tst.c
+    src/test/nfs-perf.c
 )
     
 if ("${RTEMS_NETWORKING_STACK}" STREQUAL "LEGACY")

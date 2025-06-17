@@ -1,3 +1,18 @@
+/**
+ * ----------------------------------------------------------------------------
+ * Company    : SLAC National Accelerator Laboratory
+ * ----------------------------------------------------------------------------
+ * Description: IRQ testing code
+ * ----------------------------------------------------------------------------
+ * This file is part of 'rtems-init'. It is subject to the license terms in the
+ * LICENSE.txt file found in the top-level directory of this distribution,
+ * and at:
+ *    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+ * No part of 'rtems-init', including this file, may be copied, modified,
+ * propagated, or distributed except according to the terms contained in the
+ * LICENSE.txt file.
+ * ----------------------------------------------------------------------------
+ **/
 #include <rtems.h>
 #include <bsp.h>
 #include <bsp/irq.h>
@@ -24,8 +39,11 @@ static struct rtc_save {
 static void
 dummy_irq()
 {
+#ifdef TEST_IRQ
   if (++s_counter == 5)
     BSP_disable_irq_at_pic(TEST_IRQ);
+#endif
+
 #ifdef BSP_beatnik
   /* Read the FLAGS register to clear the interrupt */
   uint8_t fl = *(volatile uint8_t*)(RTC_BASE_ADDR + 0x7FF0);
@@ -116,8 +134,10 @@ legacy_irq_tst()
 static void
 new_irq(void* arg)
 {
+#ifdef TEST_IRQ
   if (++s_counter == 5)
     rtems_interrupt_vector_disable(TEST_IRQ);
+#endif
 
 #ifdef BSP_beatnik
   /* Read the FLAGS register to clear the interrupt */

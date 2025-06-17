@@ -288,6 +288,7 @@ shell_apropos(int argc, char** argv)
 /** tests **/
 extern int legacy_irq_tst();
 extern int irq_tst();
+extern int nfs_perf_test();
 
 static struct bsp_test {
   const char* name;
@@ -296,13 +297,18 @@ static struct bsp_test {
 } s_tests[] = {
   {"legacy_irq", "Legacy BSP IRQ API", legacy_irq_tst},
   {"irq", "New IRQ API", irq_tst},
+  {"nfs_perf", "NFS perf test", nfs_perf_test},
 };
 
 static int
 shell_test(int argc, char** argv)
 {
+  const char* filter = argc > 1 ? argv[1] : NULL;
   puts(ANSI_BLUE "===== BSP Test Suite =====" ANSI_RESET);
   for (int i = 0; i < sizeof(s_tests)/sizeof(*s_tests); ++i) {
+    if (filter && !strstr(s_tests[i].name, filter))
+      continue;
+
     printf("--> Running %s\n", s_tests[i].desc);
     if (s_tests[i].pfn() != 0)
       puts(ANSI_RED "  *** Failed" ANSI_RESET);
