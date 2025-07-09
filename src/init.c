@@ -21,6 +21,9 @@
 #include <rtems/rtl/rtl.h>
 #include <rtems/rtl/rtl-shell.h>
 #include <rtems/imfs.h>
+#include <rtems/sysinit.h>
+#include <rtems/rtems-fdt.h>
+#include <bsp/fdt.h>
 
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -275,6 +278,18 @@ shell_init()
 }
 
 /**
+ * Early system init tasks (before drivers, the rest of the system)
+ */
+void
+early_init()
+{
+#ifdef BSP_mvme3100
+  printf("** Setting fdt\n");
+  bsp_fdt_copy(system_dtb);
+#endif
+}
+
+/**
  * Main RTEMS entry point
  */
 void*
@@ -288,6 +303,12 @@ POSIX_Init(void *argument)
   shell_init();
   return 0;
 }
+
+RTEMS_SYSINIT_ITEM(
+  early_init,
+  RTEMS_SYSINIT_BSP_EARLY,
+  RTEMS_SYSINIT_ORDER_MIDDLE
+);
 
 /* Ensure that stdio goes to serial (so it can be captured) */
 #if defined(__i386__) && !USE_COM1_AS_CONSOLE

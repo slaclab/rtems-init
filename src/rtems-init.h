@@ -89,6 +89,13 @@ extern unsigned char tar_rootfs[];
 extern size_t tar_rootfs_SIZE;
 
 /********************************************************
+ * fdt (generated)
+ ********************************************************/
+
+extern unsigned char system_dtb[];
+extern size_t system_dtb_SIZE;
+
+/********************************************************
  * nvram.c
  ********************************************************/
 

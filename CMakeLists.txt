@@ -81,6 +81,10 @@ set_target_properties(
 rtems_add_rootfs(
     rtems-init "${CMAKE_CURRENT_LIST_DIR}/rootfs" "TAR"
 )
+
+if ("${RTEMS_BSP}" STREQUAL "mvme3100")
+    rtems_add_dts(rtems-init src/fdt/mvme3100.dts)
+endif()
     
 target_link_libraries(
     rtems-init PRIVATE

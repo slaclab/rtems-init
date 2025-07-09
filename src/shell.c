@@ -21,6 +21,15 @@
 #include <rtems/ntpd.h>
 #include <bsp.h>
 
+#ifdef RTEMS_BSD_STACK
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <net/if_dl.h>
+#endif
+
+#include <rtems/pci.h>
+
 #ifdef HAVE_DEBUGGER
 #include <rtems/rtems-debugger.h>
 #include <rtems/rtems-debugger-remote-tcp.h>
@@ -50,6 +59,8 @@ static int shell_getaddrinfo(int argc, char** argv);
 static int shell_apropos(int argc, char** argv);
 static int shell_test(int argc, char** argv);
 static int shell_sysReset(int argc, char** argv);
+static int shell_getifaddrs(int argc, char** argv);
+static int shell_pci_probe(int argc, char** argv);
 
 #define GEV_SHOW_USAGE "gevShow -- Display all GEV NVRAM parameters"
 #define GEV_GET_USAGE "gevGet paramName -- Display value of a specific GEV parameter"
@@ -61,6 +72,7 @@ static int shell_sysReset(int argc, char** argv);
 #define SETGID_USAGE "setgid -- Sets the current effective GID"
 #define GETADDRINFO_USAGE "getaddrinfo loc -- Perform a dns lookup on 'loc'"
 #define DUMPENV_USAGE "dumpenv -- Dump the environment"
+#define LSPCI_USAGE "lspci -- Probe PCI buses"
 
 /** !!! This is internal and I probably shouldn't do this! */
 extern rtems_shell_cmd_t* rtems_shell_first_cmd;
@@ -88,6 +100,8 @@ struct shell_cmd shell_cmds[] =
   { "getaddrinfo","net",    GETADDRINFO_USAGE,    shell_getaddrinfo },
   { "apropos",    "misc",   APROPOS_USAGE,        shell_apropos },
   { "test",       "misc",   "",                   shell_test },
+  { "getifaddrs", "net",    "",                   shell_getifaddrs },
+  { "lspci",      "misc",   "",                   shell_pci_probe },
   { NULL,         NULL,     NULL,                 NULL },
 };
 
@@ -321,5 +335,137 @@ shell_test(int argc, char** argv)
 static int
 shell_sysReset(int argc, char** argv)
 {
+  return 0;
+}
+
+#ifdef RTEMS_BSD_STACK
+static struct {
+  int family;
+  const char* label;
+} AddressFamilies[] = {
+  {AF_INET, "AF_INET"},
+  {AF_INET6, "AF_INET6"},
+};
+
+static const char*
+_get_addr_family(int fam)
+{
+  for (int i = 0; i < sizeof(AddressFamilies)/sizeof(*AddressFamilies); ++i) {
+    if (fam == AddressFamilies[i].family)
+      return AddressFamilies[i].label;
+  }
+  return "Unknown";
+}
+
+static const char*
+_ntoa(struct sockaddr* sa)
+{
+  return inet_ntoa(((struct sockaddr_in*)sa)->sin_addr);
+}
+
+static struct {
+  uint32_t flag;
+  const char* label;
+} FlagMappings[] = {
+  {IFF_UP,            "UP"},
+  {IFF_UP,            "IFF_UP"},
+  {IFF_BROADCAST,     "IFF_BROADCAST"},
+  {IFF_DEBUG,         "IFF_DEBUG"},
+  {IFF_LOOPBACK,      "IFF_LOOPBACK"},
+  {IFF_POINTOPOINT,   "IFF_POINTOPOINT"},
+  {IFF_DRV_RUNNING,   "IFF_DRV_RUNNING"},
+  {IFF_NOARP,         "IFF_NOARP"},
+  {IFF_PROMISC,       "IFF_PROMISC"},
+  {IFF_ALLMULTI,      "IFF_ALLMULTI"},
+  {IFF_DRV_OACTIVE,   "IFF_DRV_OACTIVE"},
+  {IFF_SIMPLEX,       "IFF_SIMPLEX"},
+  {IFF_LINK0,         "IFF_LINK0"},
+  {IFF_LINK1,         "IFF_LINK1"},
+  {IFF_LINK2,         "IFF_LINK2"},
+  {IFF_ALTPHYS,       "IFF_ALTPHYS"},
+  {IFF_MULTICAST,     "IFF_MULTICAST"},
+  {IFF_CANTCONFIG,    "IFF_CANTCONFIG"},
+  {IFF_PPROMISC,      "IFF_PPROMISC"},
+  {IFF_MONITOR,       "IFF_MONITOR"},
+  {IFF_STATICARP,     "IFF_STATICARP"},
+  {IFF_STICKYARP,     "IFF_STICKYARP"},
+  {IFF_DYING,         "IFF_DYING"},
+  {IFF_RENAMING,      "IFF_RENAMING"},
+};
+#endif
+
+static int
+shell_getifaddrs(int argc, char** argv)
+{
+#ifdef RTEMS_BSD_STACK
+  struct ifaddrs *ifa = NULL;
+  if (getifaddrs(&ifa) < 0) {
+    perror("getifaddrs");
+    return -1;
+  }
+
+  for (struct ifaddrs* f = ifa; f; f = f->ifa_next) {
+    printf("%s\n", f->ifa_name);
+    printf("  family: %s (%d)\n", _get_addr_family(f->ifa_addr->sa_family),
+      f->ifa_addr->sa_family);
+    printf("  flags: ");
+    for (int i = 0; i < sizeof(FlagMappings)/sizeof(*FlagMappings); ++i) {
+      if (f->ifa_flags & FlagMappings[i].flag)
+        printf("%s ", FlagMappings[i].label);
+    }
+    printf("\n");
+    if (f->ifa_addr->sa_family == AF_INET)
+      printf("  inet_addr: %s\n", _ntoa(f->ifa_addr));
+    if (f->ifa_dstaddr->sa_family == AF_INET)
+      printf("  inet_dstaddr: %s\n", _ntoa(f->ifa_dstaddr));
+    if (f->ifa_netmask->sa_family == AF_INET)
+      printf("  inet_netmask: %s\n", _ntoa(f->ifa_netmask));
+    
+    if (f->ifa_addr->sa_family == AF_LINK) {
+      struct sockaddr_dl* dl = (struct sockaddr_dl*)f->ifa_addr;
+      printf("  sdl_index: %d\n", dl->sdl_index);
+      printf("  sdl_type: %d\n", dl->sdl_type);
+    }
+  }
+
+  freeifaddrs(ifa);
+#else
+  printf("Unsupported on the legacy stack\n");
+#endif
+  return 0;
+}
+
+
+static int
+shell_pci_probe(int argc, char** argv)
+{
+  const uint8_t busses = pci_bus_count();
+  if (busses == 0) {
+    printf("No PCI busses on this system\n");
+    return -1;
+  }
+  
+  printf("%-6s %-6s %-6s %6s:%-6s %-4s\n", "BUS", "SLOT", "FUNC", "VENDOR", "DEVICE", "TYPE");
+  for (int bus = 0; bus < busses; ++bus) {
+    for (int slot = 0; slot < PCI_MAX_DEVICES; ++slot) {
+      for (int func = 0; func < PCI_MAX_FUNCTIONS; ++func) {
+        uint16_t vendor, device;
+        if (pci_read_config_word(bus, slot, func, PCI_VENDOR_ID, &vendor) != 0)
+          continue;
+        if (pci_read_config_word(bus, slot, func, PCI_DEVICE_ID, &device) != 0)
+          continue;
+        if (vendor == 0xFFFF && device == 0xFFFF)
+          continue;
+        
+        uint8_t type = 0;
+        if (pci_read_config_byte(bus, slot, func, PCI_HEADER_TYPE, &type) != 0)
+          printf("failed to read PCI_HEADER_TYPE\n");
+          
+        printf("0x%04x 0x%04x 0x%04x   0x%04x:0x%04x   0x%04x\n",
+          bus, slot, func, vendor, device, (int)type);
+      }
+    }
+  }
+  
   return 0;
 }
