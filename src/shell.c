@@ -20,6 +20,7 @@
 #include <rtems/ntpq.h>
 #include <rtems/ntpd.h>
 #include <bsp.h>
+#include <rtems/libi2c.h>
 
 #ifdef RTEMS_BSD_STACK
 #include <ifaddrs.h>
@@ -345,6 +346,7 @@ static struct {
 } AddressFamilies[] = {
   {AF_INET, "AF_INET"},
   {AF_INET6, "AF_INET6"},
+  {AF_LINK, "AF_LINK"},
 };
 
 static const char*
@@ -435,7 +437,6 @@ shell_getifaddrs(int argc, char** argv)
   return 0;
 }
 
-
 static int
 shell_pci_probe(int argc, char** argv)
 {
@@ -444,8 +445,8 @@ shell_pci_probe(int argc, char** argv)
     printf("No PCI busses on this system\n");
     return -1;
   }
-  
-  printf("%-6s %-6s %-6s %6s:%-6s %-4s\n", "BUS", "SLOT", "FUNC", "VENDOR", "DEVICE", "TYPE");
+
+  printf("%-6s %-6s %-8s %6s:%-8s %-4s\n", "BUS", "SLOT", "FUNC", "VENDOR", "DEVICE", "TYPE");
   for (int bus = 0; bus < busses; ++bus) {
     for (int slot = 0; slot < PCI_MAX_DEVICES; ++slot) {
       for (int func = 0; func < PCI_MAX_FUNCTIONS; ++func) {
