@@ -9,4 +9,4 @@
 	url = git@github.com:slaclab/cexpsh.git
 [submodule "lua"]
 	path = lua
-	url = https://github.com/lua/lua.git
+	url = https://github.com/JJL772/lua.git
