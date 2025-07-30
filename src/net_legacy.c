@@ -38,29 +38,29 @@ rtems_ne2kpci_driver_attach (struct rtems_bsdnet_ifconfig *config, int attach)
   uint8_t  irq;
   uint32_t bar0;
   int B, D, F, ret;
-  printk("Probing for NE2000 on PCI (aka. Realtek 8029)\n");
+  klog("ne2kpci: Probing for NE2000 on PCI (aka. Realtek 8029)\n");
 
   if(pci_find_device(PCI_VENDOR_ID_REALTEK, PCI_DEVICE_ID_REALTEK_8029, 0, &B, &D, &F))
   {
-      printk("Not found\n");
-      return 0;
+    klog("ne2kpci: Not found\n");
+    return 0;
   }
 
-  printk("Found %d:%d.%d\n", B, D, F);
+  klog("ne2kpci: Found %d:%d.%d\n", B, D, F);
 
   ret = pci_read_config_dword(B, D, F, PCI_BASE_ADDRESS_0, &bar0);
   ret|= pci_read_config_byte(B, D, F, PCI_INTERRUPT_LINE, &irq);
 
   if(ret || (bar0&PCI_BASE_ADDRESS_SPACE)!=PCI_BASE_ADDRESS_SPACE_IO)
   {
-      printk("Failed reading card config\n");
-      return 0;
+    kerror("ne2kpci: Failed reading card config\n");
+    return 0;
   }
 
   config->irno = irq;
   config->port = bar0&PCI_BASE_ADDRESS_IO_MASK;
 
-  printk("Using port=0x%x irq=%u\n", (unsigned)config->port, config->irno);
+  klog("ne2kpci: Using port=0x%x irq=%u\n", (unsigned)config->port, config->irno);
 
   return rtems_ne_driver_attach(config, attach);
 }
@@ -101,15 +101,15 @@ struct rtems_bsdnet_config rtems_bsdnet_config = {
 void
 network_init()
 {
-  printf("** Begin legacy network init\n");
+  klog("Starting legacy network stack\n");
 
   rtems_bsdnet_initialize_network();
   rtems_bsdnet_show_if_stats();
 
-  printf("*** Starting ntpd\n");
+  klog("Starting ntpd\n");
 
   if (ntp_init() != 0)
-    printf("**** NTP init failed; it will now be disabled\n");
+    kerror("NTP init failed; it will now be disabled\n");
 
-  printf("** End legacy network init\n");
+  klog("End legacy network init\n");
 }

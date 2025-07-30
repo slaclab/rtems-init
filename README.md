@@ -12,7 +12,9 @@ make -f Makefile.cmake TARGETS="rtems7-uC5282 rtems7-beatnik rtems7-mvme3100" PR
 
 ## Boot Process
 
-Boot parameters are supplied by two sources: NVRAM and DHCP.
+Boot parameters are supplied by two sources: NVRAM and DHCP. Parameters are set in the environment and at the bspcmdline by netboot.
+
+* rc.lua is executed at boot, if it exists
 
 ## Supported BSPs
 

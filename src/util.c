@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "util.h"
 
@@ -225,4 +226,81 @@ int
 bsp_cmdline_has_param(const char* param)
 {
   return NULL != rtems_bsp_cmdline_get_param_raw(param);
+}
+
+int
+file_exists(const char* file)
+{
+  struct stat st;
+  if (stat(file, &st) < 0)
+    return 0;
+  return 1;
+}
+
+int
+kvlog(const char* fmt, va_list va)
+{
+  struct timespec tp;
+  clock_gettime(CLOCK_MONOTONIC, &tp);
+
+  fprintf(stderr, ANSI_GREEN "[%5lld.%05ld] " ANSI_RESET,
+    tp.tv_sec, tp.tv_nsec / 1000);
+  return vfprintf(stderr, fmt, va);
+}
+
+int
+klog(const char* fmt, ...)
+{
+  va_list va;
+  va_start(va, fmt);
+  int r = kvlog(fmt, va);
+  va_end(va);
+  return r;
+}
+
+int
+kvwarn(const char* fmt, va_list va)
+{
+  struct timespec tp;
+  clock_gettime(CLOCK_MONOTONIC, &tp);
+
+  fprintf(stderr, ANSI_GREEN "[%5lld.%06ld] " ANSI_YELLOW,
+    tp.tv_sec, tp.tv_nsec / 1000);
+  int r = vfprintf(stderr, fmt, va);
+  fputs(ANSI_RESET, stderr);
+  return r;
+}
+
+int
+kwarn(const char* fmt, ...)
+{
+  va_list va;
+  va_start(va, fmt);
+  int r = kvwarn(fmt, va);
+  va_end(va);
+  return r;
+}
+
+int
+kverror(const char* fmt, va_list va)
+{
+  struct timespec tp;
+  clock_gettime(CLOCK_MONOTONIC, &tp);
+
+  fprintf(stderr, ANSI_GREEN "[%5lld.%05ld] " ANSI_RED,
+    tp.tv_sec, tp.tv_nsec / 1000);
+  int r = vfprintf(stderr, fmt, va);
+  fputs(ANSI_RESET, stderr);
+  return r;
+}
+
+int
+kerror(const char* fmt, ...)
+{
+  va_list va;
+  va_start(va, fmt);
+  int r = kverror(fmt, va);
+  va_end(va);
+  fputs(ANSI_RESET, stderr);
+  return r;
 }

@@ -30,7 +30,7 @@ generate_resolv_conf()
 {
   FILE* fp = fopen("/etc/resolv.conf", "wb");
   if (!fp) {
-    printf("*** Failed to create /etc/resolv.conf\n");
+    kerror("Failed to generate /etc/resolv.conf\n");
     return -1;
   }
 
@@ -76,7 +76,7 @@ run_ntpd(rtems_task_argument arg)
   if (*ntp3 && !pntp3) pntp3 = ntp3;
   
   if (!pntp1) {
-    printf("No NTP servers provided by DHCP or NVRAM, skipping NTP...\n");
+    kwarn("No NTP servers provided by DHCP or NVRAM, skipping NTP...\n");
     rtems_task_delete(RTEMS_SELF);
     return;
   }
@@ -93,7 +93,7 @@ run_ntpd(rtems_task_argument arg)
   if (pntp2) ntpcmd[i++] = pntp2;
   if (pntp3) ntpcmd[i++] = pntp3;
 
-  printf("NTP servers: %s %s %s\n", 
+  klog("NTP servers: %s %s %s\n", 
     pntp1 ? pntp1 : "",
     pntp2 ? pntp2 : "",
     pntp3 ? pntp3: "");
@@ -101,10 +101,10 @@ run_ntpd(rtems_task_argument arg)
   r = rtems_ntpd_run(i, ntpcmd);
   
   if (r != 0) {
-    printf("ntpd exited abnormally\n");
+    kerror("ntpd exited abnormally\n");
   }
 
-  printf("ntpd exited\n");
+  klog("ntpd exited\n");
   rtems_task_delete(RTEMS_SELF);
 }
 
@@ -126,7 +126,7 @@ tz_init()
   setenv("TZ", buf, 1);
   tzset();
 
-  printf("**** Set timezone to %s\n", buf);
+  klog("Set timezone to %s\n", buf);
 }
 
 int
@@ -147,11 +147,11 @@ ntp_init()
   );
   
   if (r != RTEMS_SUCCESSFUL) {
-    printf("Failed to create NTPD task\n");
+    kerror("Failed to create NTPD task\n");
   }
   else {
     if (rtems_task_start(ntp_thread, run_ntpd, 0) != RTEMS_SUCCESSFUL) {
-      printf("Failed to start NTPD task\n");
+      kerror("Failed to start NTPD task\n");
     }
   }
 

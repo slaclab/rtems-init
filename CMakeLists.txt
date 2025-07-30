@@ -6,7 +6,7 @@ option(BUILD_TESTS "Enable to build the tests" ON)
 option(HOST_BUILD "Enable to build for host system" OFF)
 set(ENABLE_TEXT_SEGMENT "default" CACHE STRING "Enable the cexpsh text segment. Can be 'default', 'yes' or 'no'" FORCE)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
 set(SRCDIR "${CMAKE_CURRENT_LIST_DIR}")
 
 if (RTEMS_INSTALL)
@@ -48,6 +48,7 @@ set(RTEMS_INIT_SRCS
     src/nvram.c
     src/hack.c
     src/net.c
+    src/rtems-lua.c
 
     # Tests
     src/test/irq-tst.c
@@ -87,21 +88,21 @@ rtems_add_rootfs(
 )
 
 if ("${RTEMS_BSP}" STREQUAL "mvme3100")
-    rtems_add_dts(rtems-init src/fdt/mvme3100.dts)
+    #rtems_add_dts(rtems-init src/fdt/mvme3100.dts)
 endif()
     
 target_link_libraries(
     rtems-init PRIVATE
     
     cexp
+    ntp
+    telnetd
+    tftpfs
+    bsd
+    debugger
     rtemscxx
     rtemscpu
     rtemsbsp
-    ntp
-    telnetd
-    bsd
-    debugger
-    tftpfs
     c
     m
 )

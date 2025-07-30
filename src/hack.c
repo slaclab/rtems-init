@@ -9,3 +9,5 @@ int __attribute__((visibility("default"))) unlinkat(int a, const char* b, int c)
 }
 
 int _GLOBAL_OFFSET_TABLE_ = 0;
+
+extern char _PPC_INTERRUPT_DISABLE_MASK[];

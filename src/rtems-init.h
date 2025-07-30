@@ -121,3 +121,24 @@ extern int ntp_init();
  ********************************************************/
 
 extern void network_init();
+
+/********************************************************
+ * rtems-lua.c
+ ********************************************************/
+
+extern int lua_exec_script(const char* file);
+
+/********************************************************
+ * util.c
+ ********************************************************/
+
+/* Returns 1 if file exists */
+int file_exists(const char* file);
+
+/* klog helpers */
+int kvlog(const char* fmt, va_list va);
+int klog(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
+int kvwarn(const char* fmt, va_list va);
+int kwarn(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
+int kverror(const char* fmt, va_list va);
+int kerror(const char* fmt, ...) __attribute__((format(printf, 1, 2)));

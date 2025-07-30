@@ -32,6 +32,11 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <dirent.h>
+
+#ifdef HAVE_LUA
+#include "lua.h"
+#endif
 
 #include "rtems-init.h"
 #include "getopt_s.h"
@@ -60,21 +65,21 @@ serial_init()
 {
   struct termios tio;
   if (tcgetattr(fileno(stdin), &tio) < 0) {
-    perror("tcgetattr");
+    kerror("tcgetattr: %s\n", strerror(errno));
   }
   
   tio.c_iflag &= (IXOFF|IXON|IXANY|IGNBRK);
   tio.c_iflag |= BRKINT;
   if (tcsetattr(fileno(stdin), TCSANOW, &tio) < 0) {
-    perror("tcsetattr");
+    kerror("tcsetattr: %s\n", strerror(errno));
   }
   
   /** Display our really cool banner */
   puts(BANNER);
 
-  printf("*** RTEMS : %s\n", rtems_get_version_string());
-  printf("*** SLAC RTEMS Init System : Built %s %s\n", __DATE__, __TIME__);
-  printf("*** BSP command line: %s\n", rtems_bsp_cmdline_get());
+  klog("*** RTEMS : %s\n", rtems_get_version_string());
+  klog("*** SLAC RTEMS Init System : Built %s %s\n", __DATE__, __TIME__);
+  klog("*** BSP command line: %s\n", rtems_bsp_cmdline_get());
 
 #ifdef BSP_I2C_BUS0_NAME
   BSP_i2c_initialize();
@@ -100,7 +105,7 @@ do_mount(const char* ip, const char* src, const char* mntpt,
   case FS_TYPE_9P:
     /** Unsupported for now */
   default:
-    printf("*** Unsupported FS type\n");
+    kerror("do_mount: unsupported FS type: %d\n", type);
     return -1;
   }
 
@@ -112,13 +117,13 @@ do_mount(const char* ip, const char* src, const char* mntpt,
   hint.ai_family = AF_INET;
   hint.ai_flags = AI_PASSIVE;
   if (getaddrinfo(ip, NULL, &hint, &ai) != 0) {
-    perror("*** Addr lookup failed");
+    kerror("do_mount: addr lookup failed: %s\n", strerror(errno));
     return -1;
   }
 
   if (ai->ai_addr->sa_len != sizeof(struct sockaddr_in) || 
       ai->ai_addr->sa_family != AF_INET) {
-    printf("*** Addr lookup failed, didn't get ipv4 addr\n");
+    kerror("do_mount: addr lookup failed, didn't get ipv4 addr\n");
     freeaddrinfo(ai);
     return -1;
   }
@@ -146,7 +151,7 @@ do_mount(const char* ip, const char* src, const char* mntpt,
   if (mount(source, mntpt, fs, 0, opts) < 0)
     return -1;
 
-  printf("*** Mounted %s:%s at %s\n", ip, src, mntpt);
+  klog("Mounted %s:%s at %s\n", ip, src, mntpt);
   return 0;
 }
 
@@ -164,17 +169,17 @@ mounts_init()
   char value[512];
   int opt = 0;
 
-  printf("** Setting up mounts\n");
+  klog("Setting up mounts\n");
 
   /** Mount FS that includes the boot file */
   bp = getenv("BP_FILE");
   if (bp) {
     if (parse_mount_spec(bp, &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
-      printf("*** BP_FILE malformed, unable to parse\n");
+      kerror("BP_FILE malformed, unable to parse\n");
     }
     
     if (do_mount(ip, src, mntpt, uid, gid, fs) < 0) {
-      printf("*** Mount failed for %s:%s:%s\n", ip, src, mntpt);
+      kerror("Mount failed for %s:%s:%s\n", ip, src, mntpt);
     }
   }
 
@@ -186,43 +191,41 @@ mounts_init()
       bp += sizeof("INIT=")-1;
     
     if (parse_mount_spec(bp, &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
-      printf("*** BP_PARM malformed, unable to parse\n");
+      kerror("BP_PARM malformed, unable to parse\n");
       goto cmdline_mnt;
     }
 
     if (ismounted(mntpt)) {
-      printf("*** %s already mounted, skipping\n", mntpt);
+      kwarn("%s already mounted, skipping\n", mntpt);
       goto cmdline_mnt;
     }
 
     if (do_mount(ip, src, mntpt, uid, gid, fs) < 0) {
-      printf("*** Mount failed for %s:%s:%s\n", ip, src, mntpt);
+      kerror("Mount failed for %s:%s:%s\n", ip, src, mntpt);
     }
   }
   else {
-    printf("*** No BP_PARM. Missing from NVRAM and DHCP?\n");
+    kwarn("No BP_PARM. Missing from NVRAM and DHCP?\n");
   }
 
 cmdline_mnt:
-
-  
 
 #if __i386__
   /** On i386, parse mounts provided by BSP command line */
   if (rtems_bsp_cmdline_get_param("--mount", value, sizeof(value))) {
     if (parse_mount_spec(value + sizeof("--mount"), 
         &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
-      printf("*** Unable to parse --mount\n");
+      kerror("Unable to parse --mount\n");
       goto end;
     }
 
     if (ismounted(file)) {
-      printf("*** %s already mounted, skipping\n", file);
+      kwarn("%s already mounted, skipping\n", file);
       goto end;
     }
 
     if (do_mount(ip, src, file, uid, gid, fs) < 0) {
-      printf("*** Mount failed for %s:%s:%s\n", ip, src, file);
+      kerror("Mount failed for %s:%s:%s\n", ip, src, file);
     }
   }
 #endif
@@ -237,10 +240,14 @@ end:
 void
 imfs_init()
 {
-  printf("Unpacking rootfs...\n");
+  klog("Unpacking rootfs...\n");
   /** Unpack the rootfs */
   setuid(0);
-  rtems_tarfs_load("/", tar_rootfs, tar_rootfs_SIZE);
+  if (rtems_tarfs_load("/", tar_rootfs, tar_rootfs_SIZE) < 0) {
+    kerror("unable to unpack rootfs!\n");
+    rtems_panic("unable to unpack rootfs!\n");
+  }
+  klog("Finished unpacking rootfs\n");
 }
 
 /**
@@ -249,7 +256,7 @@ imfs_init()
 void
 shell_init()
 {
-  printf("** Begin shell init\n");
+  klog("Starting interactive shell\n");
   rtems_shell_init_environment();
 
   char val[256];
@@ -270,9 +277,9 @@ shell_init()
   );
 
   if (r != RTEMS_SUCCESSFUL)
-    printf("Unable to init RTEMS shell\n");
+    kerror("Unable to init RTEMS shell\n");
   
-  printf("** End shell init\n");
+  klog("Finished interactive shell init\n");
 
   rtems_termios_register_isig_handler(rtems_termios_posix_isig_handler);
 }
@@ -284,9 +291,59 @@ void
 early_init()
 {
 #ifdef BSP_mvme3100
-  printf("** Setting fdt\n");
-  bsp_fdt_copy(system_dtb);
+  //printf("** Setting fdt\n");
+  //bsp_fdt_copy(system_dtb);
 #endif
+}
+
+/**
+ * Execute the rc.lua file
+ */
+static void
+rc_init()
+{
+  if (!file_exists("/etc/rc.lua"))
+    return;
+  klog("Running /etc/rc.lua\n");
+  lua_exec_script("/etc/rc.lua");
+}
+
+static int
+initd_dirent_filter(const struct dirent* de)
+{
+  const char* s = &de->d_name[de->d_namlen-1];
+  if (*s == '.') return 0;
+  for (; s > de->d_name && *s != '.' && *s; --s)
+    ;
+  return !strcmp(s, ".lua");
+}
+
+/**
+ * Execute any scripts in /etc/init.d
+ */
+static void
+initd_init()
+{
+  int n;
+  struct dirent** dirs = NULL;
+  n = scandir(
+    "/etc/init.d",
+    &dirs,
+    initd_dirent_filter,
+    alphasort
+  );
+
+  if (n < 0)
+    return;
+
+  for (int i = 0; i < n; ++i) {
+    char path[PATH_MAX];
+    snprintf(path, sizeof(path), "/etc/init.d/%s", dirs[i]->d_name);
+    klog("Running %s\n", path);
+    lua_exec_script(path);
+  }
+
+  free(dirs);
 }
 
 /**
@@ -295,11 +352,28 @@ early_init()
 void*
 POSIX_Init(void *argument)
 {
+  /* Init nvram */
   nvram_init();
+
+  /* Init serial console */
   serial_init();
+
+  /* Unpack the rootfs */
   imfs_init();
+
+  /* Run /etc/rc.lua */
+  rc_init();
+
+  /* Setup network, dispatch dhcp */
   network_init();
+
+  /* Setup remote mounts */
   mounts_init();
+
+  /* Kick off scripts in /etc/init.d */
+  initd_init();
+
+  /* Start interactive shell */
   shell_init();
   return 0;
 }

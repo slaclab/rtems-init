@@ -21,6 +21,7 @@
 #include <rtems/bsd/util.h>
 #include <machine/rtems-bsd-commands.h>
 #include <rtems/ntpd.h>
+#include <syslog.h>
 
 #include <assert.h>
 #include <stdint.h>
@@ -74,7 +75,7 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
 
   for (char* const* e = env; *e != NULL; ++e) {
     if (verbose)
-      printf(" dhcpd: '%s'\n", *e);
+      klog(" dhcpd: '%s'\n", *e);
 
     if (strHasPrefix(*e, "interface")) {
       if ((c = strpbrk(*e, "="))) {
@@ -222,6 +223,26 @@ do_dhcp()
   /** FIXME: timeout leaks an event */
 }
 
+static int
+bsd_vprintf_logger(int sevr, const char* fmt, va_list va)
+{
+  int r;
+  switch (sevr) {
+  case LOG_WARNING:
+    r = kvwarn(fmt, va);
+    break;
+  case LOG_CRIT:
+  case LOG_ERR:
+    r = kverror(fmt, va);
+    break;
+  default:
+    r = kvlog(fmt, va);
+    break;
+  }
+  fputc('\n', stderr);
+  return r;
+}
+
 /****************************************************************************\
  * Network init
 \****************************************************************************/
@@ -230,7 +251,7 @@ void
 network_init()
 {
   int r;
-  printf("** Begin BSD network init\n");
+  klog("Starting BSD networking stack\n");
 
   // From EPICS base:
 #if defined(__i386__)
@@ -242,15 +263,16 @@ network_init()
 #endif
 
   if (rtems_bsd_initialize() != RTEMS_SUCCESSFUL) {
-    printf("*** rtems_bsd_initialize failed\n");
+    kerror("network_init: rtems_bsd_initialize failed\n");
     abort();
     return;
   }
 
   rtems_bsd_setlogpriority("debug");
-  
+  rtems_bsd_set_vprintf_handler(bsd_vprintf_logger);
+
   if (rtems_bsd_ifconfig_lo0() != 0) {
-    printf("*** rtems_bsd_ifconfig_lo0 failed\n");
+    kerror("network_init: rtems_bsd_ifconfig_lo0 failed\n");
     abort();
     return;
   }
@@ -258,7 +280,7 @@ network_init()
   if (!bsp_cmdline_has_param("--nodhcp"))
     do_dhcp();
   else {
-    printf("*** Skipping dhcp per request\n");
+    klog("Skipping dhcp per request\n");
 
     /** QEMU specific configuration */
     char* ifcmd[] = {
@@ -273,7 +295,7 @@ network_init()
 
     if (rtems_bsd_command_ifconfig(RTEMS_BSD_ARGC(ifcmd), ifcmd) 
           != EXIT_SUCCESS) {
-      printf("*** rtems_bsd_command_ifconfig failed\n");
+      kerror("network_init: rtems_bsd_command_ifconfig failed\n");
     }
   }
   
@@ -281,24 +303,24 @@ network_init()
   static char* IFCONFIG_ARGS[] = {"ifconfig", NULL};
   rtems_bsd_command_ifconfig(1, IFCONFIG_ARGS);
   
-  printf("*** Generating /etc/resolv.conf\n");
+  klog("Generating /etc/resolv.conf\n");
   generate_resolv_conf();
 
-  printf("*** Starting ntpd\n");
+  klog("Starting ntpd\n");
 
   if (ntp_init() != 0) {
-    printf("**** NTP init failed; it will now be disabled\n");
+    kerror("NTP init failed; it will now be disabled\n");
   }
 
-  printf("*** Starting telnetd\n");
+  klog("Starting telnetd\n");
   if (rtems_telnetd_initialize() != RTEMS_SUCCESSFUL) {
-    printf("**** Failed to init telnetd\n");
+    kerror("Failed to init telnetd\n");
   }
   else {
     if (rtems_telnetd_start(&rtems_telnetd_config) != RTEMS_SUCCESSFUL) {
-      printf("**** Failed to start telnetd\n");
+      kerror("Failed to start telnetd\n");
     }
   }
 
-  printf("** End BSD network init\n");
+  klog("End BSD network init\n");
 }
