@@ -77,9 +77,16 @@ serial_init()
   /** Display our really cool banner */
   puts(BANNER);
 
-  klog("*** RTEMS : %s\n", rtems_get_version_string());
-  klog("*** SLAC RTEMS Init System : Built %s %s\n", __DATE__, __TIME__);
-  klog("*** BSP command line: %s\n", rtems_bsp_cmdline_get());
+  kclog(KLOG_BLUE, "*** RTEMS : %s\n", rtems_get_version_string());
+  kclog(KLOG_BLUE, "*** SLAC RTEMS Init System : Built %s %s\n", __DATE__, __TIME__);
+#ifdef RTEMS_BSD_STACK
+  kclog(KLOG_BLUE, "*** Network Stack : BSD\n");
+#elif defined(RTEMS_LEGACY_STACK)
+  kclog(KLOG_BLUE, "*** Network Stack : Legacy\n");
+#else
+  kclog(KLOG_BLUE, "*** No networking stack\n");
+#endif
+  klog("BSP command line: %s\n", rtems_bsp_cmdline_get());
 
 #ifdef BSP_I2C_BUS0_NAME
   BSP_i2c_initialize();

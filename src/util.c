@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "rtems-init.h"
 #include "util.h"
 
 struct _event_s
@@ -238,14 +239,40 @@ file_exists(const char* file)
 }
 
 int
-kvlog(const char* fmt, va_list va)
+kvlog(enum klog_color c, const char* fmt, va_list va)
 {
   struct timespec tp;
   clock_gettime(CLOCK_MONOTONIC, &tp);
 
-  fprintf(stderr, ANSI_GREEN "[%5lld.%05ld] " ANSI_RESET,
+  const char* nc = 0;
+  switch (c) {
+  case KLOG_GREEN:
+    nc = ANSI_GREEN; break;
+  case KLOG_YELLOW:
+    nc = ANSI_YELLOW; break;
+  case KLOG_RED:
+    nc = ANSI_RED; break;
+  case KLOG_BLUE:
+    nc = ANSI_BLUE; break;
+  default:
+    break;
+  }
+  
+  fprintf(stderr, ANSI_GREEN "[%5lld.%06ld] " ANSI_RESET,
     tp.tv_sec, tp.tv_nsec / 1000);
+  if (nc)
+    fprintf(stderr, "%s", nc);
   return vfprintf(stderr, fmt, va);
+}
+
+int
+kclog(enum klog_color c, const char* fmt, ...)
+{
+  va_list va;
+  va_start(va, fmt);
+  int r = kvlog(c, fmt, va);
+  va_end(va);
+  return r;
 }
 
 int
@@ -253,7 +280,7 @@ klog(const char* fmt, ...)
 {
   va_list va;
   va_start(va, fmt);
-  int r = kvlog(fmt, va);
+  int r = kvlog(KLOG_NONE, fmt, va);
   va_end(va);
   return r;
 }
@@ -287,7 +314,7 @@ kverror(const char* fmt, va_list va)
   struct timespec tp;
   clock_gettime(CLOCK_MONOTONIC, &tp);
 
-  fprintf(stderr, ANSI_GREEN "[%5lld.%05ld] " ANSI_RED,
+  fprintf(stderr, ANSI_GREEN "[%5lld.%06ld] " ANSI_RED,
     tp.tv_sec, tp.tv_nsec / 1000);
   int r = vfprintf(stderr, fmt, va);
   fputs(ANSI_RESET, stderr);

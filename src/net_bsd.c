@@ -178,7 +178,7 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
   }
   
   if (bound) {
-    printf("dhcp: done\n");
+    klog("dhcp: done\n");
 
     /** Commit changes to environment */
     if (init_mode == INIT_MODE_DHCP) {
@@ -236,10 +236,11 @@ bsd_vprintf_logger(int sevr, const char* fmt, va_list va)
     r = kverror(fmt, va);
     break;
   default:
-    r = kvlog(fmt, va);
+    r = kvlog(KLOG_NONE, fmt, va);
     break;
   }
-  fputc('\n', stderr);
+  if (fmt[strlen(fmt)-1] != '\n')
+    fputc('\n', stderr);
   return r;
 }
 
