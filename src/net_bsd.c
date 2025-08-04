@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <cexp.h>
+
 #include "rtems-init.h"
 #include "util.h"
 
@@ -37,6 +39,7 @@ static void telnetd_init_command(char*, void*);
  * Telnet daemon
 \****************************************************************************/
 
+/* Note: Must be global symbol */
 rtems_telnetd_config_table rtems_telnetd_config = {
   .stack_size = 0,
   .login_check = NULL,
@@ -59,8 +62,9 @@ telnetd_init_command(char* dev, void* cfg)
   se.taskname = "TELN";
   se.forever = false;
   se.login_check = NULL;
-
-  rtems_shell_main_loop(&se);
+  
+  cexpsh(NULL);
+  //rtems_shell_main_loop(&se);
 }
 
 /****************************************************************************\
@@ -316,11 +320,6 @@ network_init()
   klog("Starting telnetd\n");
   if (rtems_telnetd_initialize() != RTEMS_SUCCESSFUL) {
     kerror("Failed to init telnetd\n");
-  }
-  else {
-    if (rtems_telnetd_start(&rtems_telnetd_config) != RTEMS_SUCCESSFUL) {
-      kerror("Failed to start telnetd\n");
-    }
   }
 
   klog("End BSD network init\n");
