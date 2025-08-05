@@ -212,12 +212,7 @@ install(
 set(PMBFD_SRCS
     "cexp/pmbfd/bfd.c"
     "cexp/pmbfd/opcodesup.c"
-    "cexp/pmbfd/bfd-reloc-arm.c"
-    "cexp/pmbfd/bfd-reloc-m68k.c"
-    "cexp/pmbfd/bfd-reloc-i386.c"
-    "cexp/pmbfd/bfd-reloc-powerpc.c"
-    "cexp/pmbfd/bfd-reloc-sparc.c"
-    "cexp/pmbfd/bfd-reloc-x86_64.c"
+    "cexp/pmbfd/bfd-reloc-${RTEMS_ARCH}.c"
 )
 
 add_library(
@@ -487,24 +482,6 @@ install(
 )
 
 ###################################################
-# xsyms
-###################################################
-
-# NOTE: This is a huge and ugly hack, but it's the easiest way
-# to set this up right now.
-add_custom_command(
-    OUTPUT "${CMAKE_BINARY_DIR}/xsyms"
-    COMMAND gcc -o "${CMAKE_BINARY_DIR}/xsyms"
-        -I/usr/include/libiberty
-        "${CMAKE_CURRENT_LIST_DIR}/cexp/xsyms.c"
-        -lbfd -lelf -liberty
-    COMMENT "Building xsyms utility..."
-)
-
-add_custom_target(xsyms DEPENDS "${CMAKE_BINARY_DIR}/xsyms")
-add_dependencies(cexp xsyms)
-
-###################################################
 # libbspExt
 ###################################################
 set(BSPEXT_SRCS
@@ -527,6 +504,27 @@ if ("${RTEMS_ARCH}" STREQUAL "powerpc")
     )
 endif()
 
+###################################################
+# miscUtils
+###################################################
+set(MISCUTILS_SRCS
+    miscUtils/shell-tools.c
+    miscUtils/mem-tools.c
+)
+
+rtems_add_object(
+    miscUtils rtems-init
+
+    ${MISCUTILS_SRCS}
+)
+
+target_include_directories(
+    miscUtils PRIVATE "cexp"
+)
+
+target_compile_definitions(
+    miscUtils PRIVATE HAVE_CEXP
+)
 
 ###################################################
 # Host tests
