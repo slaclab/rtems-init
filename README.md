@@ -1,4 +1,6 @@
-# rtems-init+.
+# rtems-init
+
+An init system and testing framework for RTEMS applications.
 
 rtems-init performs necessary setup (DHCP, NTP), and provides a framework for system configuration.
 This is mostly targeted at EPICS IOCs, particularly ones that need additional system configuration outside of EPICS base itself.
@@ -18,13 +20,13 @@ Boot parameters are supplied by two sources: NVRAM and DHCP. Parameters are set 
 
 ## Supported BSPs
 
-Tested on: RTEMS-beatnik, RTEMS-pc686-qemu
+Tested on: beatnik (mvme6100), mvme3100, uC5282, pc686-qemu
 
 ## Simulating with QEMU
 
-rtems-init can run on QEMU using the RTEMS-pc686-qemu target. Other targets may work, but I haven't tested them.
+rtems-init can run on QEMU using the pc686-qemu target. Other targets may work, but I haven't tested them.
 
-First, build the target using `ninja -C build-cmake/build-rtems6-pc686-qemu`
+First, build the target using `ninja -C build-cmake/build-rtems7-pc686-qemu`
 
 Run with `./tests/run-qemu-i386.sh`
 
@@ -39,3 +41,7 @@ Some of the shared components:
   - Extensions to the RTEMS ISR API
 - drvLan9118
   - Raw UDP packet driver for the LCLS fast feedback system 
+- cexp
+  - C expression shell, legacy component originally built by SLAC for RTEMS to emulate the vxWorks shell.
+- lua
+  - RTEMS port of Lua, submoduled in.

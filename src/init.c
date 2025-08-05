@@ -38,6 +38,8 @@
 #include "lua.h"
 #endif
 
+#include "cexp.h"
+
 #include "rtems-init.h"
 #include "getopt_s.h"
 #include "util.h"
@@ -264,6 +266,7 @@ void
 shell_init()
 {
   klog("Starting interactive shell\n");
+
   rtems_shell_init_environment();
 
   char val[256];
@@ -277,6 +280,8 @@ shell_init()
     if (!cmd.cmd) break;
     rtems_shell_add_cmd(cmd.cmd, cmd.topic, cmd.usage, cmd.command);
   }
+
+  cexpsh(NULL);
 
   rtems_status_code r;
   r = rtems_shell_init(
@@ -309,10 +314,17 @@ early_init()
 static void
 rc_init()
 {
-  if (!file_exists("/etc/rc.lua"))
-    return;
-  klog("Running /etc/rc.lua\n");
-  lua_exec_script("/etc/rc.lua");
+  /* Exec cexpsh rc script */
+  if (file_exists("/etc/rc.cmd")) {
+    klog("Running /etc/rc.cmd\n");
+    cexpsh("/etc/rc.cmd");
+  }
+
+  /* Exec lua rc script */
+  if (file_exists("/etc/rc.lua")) {
+    klog("Running /etc/rc.lua\n");
+    lua_exec_script("/etc/rc.lua");
+  }
 }
 
 static int

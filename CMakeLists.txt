@@ -14,6 +14,8 @@ if (RTEMS_INSTALL)
     set(CMAKE_INSTALL_PREFIX "${RTEMS_TOP}/target/rtems/${RTEMS_ARCH}-rtems${RTEMS_TOOL_VERSION}/${RTEMS_BSP}")
 endif()
 
+find_package(PkgConfig)
+
 # Init rtems cmake integration
 include(tools/cmake/rtems.cmake)
 rtems_cmake_init()
@@ -56,6 +58,7 @@ set(RTEMS_INIT_SRCS
 
     # Lua
     lua/onelua.c
+    lua/lua.c
 )
     
 if ("${RTEMS_NETWORKING_STACK}" STREQUAL "LEGACY")
@@ -67,7 +70,8 @@ elseif("${RTEMS_NETWORKING_STACK}" STREQUAL "BSD")
         src/net_bsd.c
     )
 endif()
-    
+
+set (USE_CEXP 1)
 rtems_add_executable(
     rtems-init
     
@@ -113,6 +117,7 @@ target_compile_definitions(
     MAKE_LIB=1
     LUA_USE_POSIX=1
     HAVE_LUA=1
+    HAVE_CEXP=1
 )
 
 target_include_directories(
@@ -327,8 +332,7 @@ endif()
 
 set(
     CEXP_LIBS
-    "pmelf"
-    "spencer_regexp"
+    spencer_regexp
 )
 
 set(
@@ -363,6 +367,12 @@ set(USE_PMBFD 1)
 set(ENABLE_LOADER 1)
 set(USE_TECLA 1)
 set(USE_ELFSYMS 0)
+set(USE_RTL 0)
+
+# Not compatible with pmbfd/elf
+if (USE_RTL)
+    set(USE_PMBFD 0)
+endif()
 
 # Tecla support
 if (USE_TECLA)
@@ -374,13 +384,17 @@ if (USE_TECLA)
         APPEND CEXP_INCLUDES
         cexp/libtecla
     )
+    list(
+        APPEND CEXP_LIBS
+        tecla
+    )
 endif()
 
 # ELF loader support
 if (ENABLE_LOADER)
     list(
         APPEND CEXP_SRCS 
-        cexp/bfdstuff.c
+        #cexp/bfdstuff.c
     )
     list(
         APPEND CEXP_DEFINES
@@ -405,6 +419,7 @@ if (USE_PMBFD)
     list(
         APPEND CEXP_LIBS
         pmbfd
+        pmelf
     )
     list(
         APPEND CEXP_DEFINES
@@ -415,8 +430,24 @@ if (USE_PMBFD)
         APPEND CEXP_INCLUDES
         "cexp/pmbfd"
     )
+    list(
+        APPEND CEXP_SRCS
+        "cexp/bfdstuff.c"
+    )
 endif()
-    
+
+# RTEMS RTL support
+if (USE_RTL)
+    list(
+        APPEND CEXP_DEFINES
+        "USE_RTL=1"
+    )
+    list(
+        APPEND CEXP_SRCS
+        "cexp/cexprtl.c"
+    )
+endif()
+
 add_library(
     cexp STATIC ${CEXP_SRCS}
 )
@@ -430,11 +461,15 @@ target_include_directories(
 )
 
 target_link_libraries(
-    cexp PRIVATE ${CEXP_LIBS}
+    cexp PUBLIC ${CEXP_LIBS}
 )
 
 target_compile_definitions(
     cexp PRIVATE ${CEXP_DEFINES}
+)
+
+target_include_directories(
+    cexp PUBLIC cexp
 )
 
 install(
@@ -450,6 +485,24 @@ install(
     DESTINATION
         "${CMAKE_INSTALL_INCLUDEDIR}"
 )
+
+###################################################
+# xsyms
+###################################################
+
+# NOTE: This is a huge and ugly hack, but it's the easiest way
+# to set this up right now.
+add_custom_command(
+    OUTPUT "${CMAKE_BINARY_DIR}/xsyms"
+    COMMAND gcc -o "${CMAKE_BINARY_DIR}/xsyms"
+        -I/usr/include/libiberty
+        "${CMAKE_CURRENT_LIST_DIR}/cexp/xsyms.c"
+        -lbfd -lelf -liberty
+    COMMENT "Building xsyms utility..."
+)
+
+add_custom_target(xsyms DEPENDS "${CMAKE_BINARY_DIR}/xsyms")
+add_dependencies(cexp xsyms)
 
 ###################################################
 # libbspExt

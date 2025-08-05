@@ -4,6 +4,11 @@
  * ----------------------------------------------------------------------------
  * Description: Utilities for interacting with NVRAM
  * ----------------------------------------------------------------------------
+ * Notes:
+ *    - Does not support mvme3100, which uses an i2c based nvram
+ *    - Does not support uC5282
+ *    - Does not support writing to nvram
+ * ----------------------------------------------------------------------------
  * This file is part of 'rtems-init'. It is subject to the license terms in the
  * LICENSE.txt file found in the top-level directory of this distribution,
  * and at:
@@ -61,8 +66,13 @@ static const char* valid_params[] =
  * variable name is always separated using an =
  */
 static int
-parse_boot_string(const char* pboot, const char* pend, const char* param, 
-  char* result, size_t resultsz)
+parse_boot_string(
+  const char* pboot,
+  const char* pend,
+  const char* param, 
+  char* result,
+  size_t resultsz
+)
 {
   while (pboot < pend) {
     int quoted = 0;
@@ -119,8 +129,11 @@ parse_boot_string(const char* pboot, const char* pend, const char* param,
 }
 
 static int
-parse_boot_foreach(const char* pboot, const char* pend,
-  void(*parsed)(const char*, size_t, const char*, size_t))
+parse_boot_foreach(
+  const char* pboot,
+  const char* pend,
+  void(*parsed)(const char*, size_t, const char*, size_t)
+)
 {
   size_t pl = 0, vl = 0;
   while (pboot < pend) {

@@ -9,11 +9,4 @@ etc/motd            /        0644
 etc/localtime       /        0644
 etc/libdl.conf      /        0644
 etc/hosts           /        0644
-# Add libraries
-#${BSP_LIBS}/librtemsbsp.a       /lib/librtemsbsp.a      0644
-#${BSP_LIBS}/librtemscpu.a       /lib/librtemscpu.a      0644
-#${BSP_LIBS}/libbsd.a            /lib/libbsd.a           0644
-#${BSP_LIBS}/libntp.a            /lib/libntp.a           0644
-#${BSP_LIBS}/librtemscxx.a       /lib/librtemscxx.a      0644
-#${TOOLCHAIN_LIBS}/libc.a        /lib/libc.a             0644
-#${TOOLCHAIN_LIBS}/libm.a        /lib/libm.a             0644
+etc/rc.cmd          /        0777

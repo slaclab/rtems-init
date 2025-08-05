@@ -2,7 +2,7 @@
  * ----------------------------------------------------------------------------
  * Company    : SLAC National Accelerator Laboratory
  * ----------------------------------------------------------------------------
- * Description: Misc shell utilities
+ * Description: Misc shell utilities for the RTEMS shell and Cexpsh
  * ----------------------------------------------------------------------------
  * This file is part of 'rtems-init'. It is subject to the license terms in the
  * LICENSE.txt file found in the top-level directory of this distribution,
@@ -36,11 +36,11 @@
 #include <rtems/rtems-debugger-remote-tcp.h>
 #endif
 
-#ifdef HAVE_LUA
-#include "lua.h"
-#define main shell_lua
-#include "lua.c"
-#undef main
+#ifdef HAVE_CEXP
+#include <cexpHelp.h>
+#else
+#define CEXP_HELP_TAB_BEGIN(...)
+#define HELP(...)
 #endif
 
 #include <dlfcn.h>
@@ -69,6 +69,9 @@ static int shell_test(int argc, char** argv);
 static int shell_sysReset(int argc, char** argv);
 static int shell_getifaddrs(int argc, char** argv);
 static int shell_pci_probe(int argc, char** argv);
+static int shell_sh(int argc, char** argv);
+
+extern int shell_lua_main(int argc, char** argv);
 
 #define GEV_SHOW_USAGE "gevShow -- Display all GEV NVRAM parameters"
 #define GEV_GET_USAGE "gevGet paramName -- Display value of a specific GEV parameter"
@@ -111,8 +114,9 @@ struct shell_cmd shell_cmds[] =
   { "test",       "misc",   "",                   shell_test },
   { "getifaddrs", "net",    "",                   shell_getifaddrs },
   { "lspci",      "misc",   "",                   shell_pci_probe },
+  { "sh",         "misc",   "",                   shell_sh },
 #ifdef HAVE_LUA
-  { "lua",        "misc",   LUA_USAGE,            shell_lua },
+  { "lua",        "misc",   LUA_USAGE,            shell_lua_main },
 #endif
   { NULL,         NULL,     NULL,                 NULL },
 };
@@ -448,8 +452,8 @@ shell_getifaddrs(int argc, char** argv)
   return 0;
 }
 
-static int
-shell_pci_probe(int argc, char** argv)
+int
+lspci()
 {
   const uint8_t busses = pci_bus_count();
   if (busses == 0) {
@@ -480,4 +484,36 @@ shell_pci_probe(int argc, char** argv)
   }
   
   return 0;
+}
+
+CEXP_HELP_TAB_BEGIN(lspci)
+	HELP(
+    "List all PCI devices\n",
+	  int, lspci,  (void)
+	),
+CEXP_HELP_TAB_END
+
+static int
+shell_pci_probe(int argc, char** argv)
+{
+  return lspci();
+}
+
+int
+sh()
+{
+  return rtems_shell_main_loop(rtems_shell_get_current_env());
+}
+
+CEXP_HELP_TAB_BEGIN(sh)
+	HELP(
+    "Run an instance of the RTEMS shell\n",
+	  int, sh,  (void)
+	),
+CEXP_HELP_TAB_END
+
+static int
+shell_sh(int argc, char** argv)
+{
+  return sh();
 }
