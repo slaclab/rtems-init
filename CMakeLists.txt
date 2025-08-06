@@ -51,6 +51,7 @@ set(RTEMS_INIT_SRCS
     src/hack.c
     src/net.c
     src/rtems-lua.c
+    src/cexp-text-region.c
 
     # Tests
     src/test/irq-tst.c
