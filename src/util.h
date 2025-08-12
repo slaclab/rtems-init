@@ -69,8 +69,40 @@ enum fstype {
 
 #define MNT_STR_BUF_SZ 512
 
-extern int parse_mount_spec(const char* mntblock, enum fstype* fstype, uint32_t* uid,
-  uint32_t* gid, char* ip, char* src, char* mntpt, char* file);
+/**
+ * \brief Given a mount specification string, parse it into its components
+ * \param mntblock The mount string
+ * \param fstype [Out] file system type
+ * \param uid [Out] UID
+ * \param gid [Out] GID
+ * \param ip [Out] Buffer holding IP string
+ * \param src [Out] Buffer holding source path
+ * \param mntpt [Out] Buffer holding mount point string
+ * \param file [Out] Buffer holding file path
+ */
+extern int
+parse_mount_spec(
+  const char* mntblock,
+  enum fstype* fstype,
+  uint32_t* uid,
+  uint32_t* gid,
+  char* ip,
+  char* src,
+  char* mntpt,
+  char* file
+);
+
+/**
+ * \brief Convert mount paths to normal paths
+ * Ex: /sdf/sw:epics/base -> /sdf/sw/epics/base
+ */
+extern void convert_mount_path(const char* path, char* out, size_t outsz);
+
+/**
+ * \brief Strip the filename component off of a path. Basically anything after the
+ * last path separator.
+ */
+extern void strip_filename(char* path);
 
 extern int ismounted(const char* mntpt);
 

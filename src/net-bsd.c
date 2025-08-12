@@ -100,6 +100,14 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
       if ((c = strpbrk(*e, "="))) {
         ++c;
         sethostname(c, strlen(c));
+        strncpySafe(dhcp_runtime_cfg.hostname, *e,
+          sizeof(dhcp_runtime_cfg.hostname));
+      }
+    }
+    else if (strHasPrefix(*e, "new_network_number")) {
+      if ((c = strpbrk(*e, "="))) {
+        ++c;
+
       }
     }
     else if (strHasPrefix(*e, "new_ntp_servers")) {
@@ -179,6 +187,27 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
           sizeof(dhcp_runtime_cfg.timezone));
       }
     }
+    else if(strHasPrefix(*e, "new_subnet_mask")) {
+      if ((c = strpbrk(*e, "="))) {
+        ++c;
+        strncpySafe(dhcp_runtime_cfg.mask, c,
+          sizeof(dhcp_runtime_cfg.mask));
+      }
+    }
+    else if (strHasPrefix(*e, "new_ip_address")) {
+      if ((c = strpbrk(*e, "="))) {
+        ++c;
+        strncpySafe(dhcp_runtime_cfg.ip, c,
+          sizeof(dhcp_runtime_cfg.ip));
+      }
+    }
+    else if (strHasPrefix(*e, "new_routers")) {
+      if ((c = strpbrk(*e, "="))) {
+        ++c;
+        strncpySafe(dhcp_runtime_cfg.routers, c,
+          sizeof(dhcp_runtime_cfg.routers));
+      }
+    }
   }
   
   if (bound) {
@@ -195,6 +224,10 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
       setenv("BP_PARM", dhcp_runtime_cfg.cmdline, 1);
       setenv("BP_MYDN", dhcp_runtime_cfg.domain, 1);
       setenv("BP_FILE", dhcp_runtime_cfg.bootfile, 1);
+      setenv("BP_MYNM", dhcp_runtime_cfg.hostname, 1);
+      setenv("BP_MYMK", dhcp_runtime_cfg.mask, 1);
+      setenv("BP_MYIP", dhcp_runtime_cfg.ip, 1);
+      setenv("BP_GTWY", dhcp_runtime_cfg.routers, 1);
     }
 
     event_signal(dhcp_runtime_cfg.event);

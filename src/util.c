@@ -331,3 +331,30 @@ kerror(const char* fmt, ...)
   fputs(ANSI_RESET, stderr);
   return r;
 }
+
+void
+convert_mount_path(const char* path, char* out, size_t outsz)
+{
+  strncpy(out, path, outsz-1);
+  out[outsz-1] = 0;
+
+  for (char* p = out; *p; ++p)
+    if (*p == ':') *p = '/';
+}
+
+void
+strip_filename(char* path)
+{
+  size_t l = strlen(path);
+  char* e = path+l-1;
+  while (e > path) {
+    if (*e == '/') {
+      while (*e == '/') {
+        *e = 0; --e;
+      }
+      return;
+    }
+    --e;
+  }
+  *e = 0;
+}

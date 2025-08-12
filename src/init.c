@@ -38,7 +38,10 @@
 #include "lua.h"
 #endif
 
+#ifdef HAVE_CEXP
 #include "cexp.h"
+#include "cexpmod.h"
+#endif
 
 #include "rtems-init.h"
 #include "getopt_s.h"
@@ -243,6 +246,44 @@ end:
   return;
 }
 
+void
+path_init()
+{
+  const char* bpf = getenv("BP_FILE");
+  if (!bpf)
+    return;
+
+  const char* path = getenv("PATH");
+
+  enum fstype fstype;
+  uint32_t uid, gid;
+  char ip[MNT_STR_BUF_SZ], src[MNT_STR_BUF_SZ];
+  char mntpt[MNT_STR_BUF_SZ], file[MNT_STR_BUF_SZ];
+
+  /* parse the BP_FILE again */
+  if (parse_mount_spec(bpf, &fstype, &uid, &gid, ip, src, mntpt, file) < 0) {
+    kerror("BP_FILE malformed, unable to parse\n");
+    return;
+  }
+
+  strip_filename(file);
+
+  char pathbuf[1024];
+  snprintf(
+    pathbuf,
+    sizeof(pathbuf),
+    "%s%s%s/%s",
+    path ? path : "",
+    path ? ":" : "",
+    mntpt,
+    file
+  );
+
+  printf("PATH=%s\n", pathbuf);
+
+  setenv("PATH", pathbuf, 1);
+}
+
 /**
  * Initialize in-memory FS basics, must be done before shell and dhcpd init
  */
@@ -281,7 +322,9 @@ shell_init()
     rtems_shell_add_cmd(cmd.cmd, cmd.topic, cmd.usage, cmd.command);
   }
 
+#ifdef HAVE_CEXP
   cexpsh(NULL);
+#else
 
   rtems_status_code r;
   r = rtems_shell_init(
@@ -290,10 +333,11 @@ shell_init()
 
   if (r != RTEMS_SUCCESSFUL)
     kerror("Unable to init RTEMS shell\n");
-  
+
   klog("Finished interactive shell init\n");
 
   rtems_termios_register_isig_handler(rtems_termios_posix_isig_handler);
+#endif
 }
 
 /**
@@ -314,11 +358,13 @@ early_init()
 static void
 rc_init()
 {
+#ifdef HAVE_CEXP
   /* Exec cexpsh rc script */
   if (file_exists("/etc/rc.cmd")) {
     klog("Running /etc/rc.cmd\n");
     cexpsh("/etc/rc.cmd");
   }
+#endif
 
   /* Exec lua rc script */
   if (file_exists("/etc/rc.lua")) {
@@ -380,11 +426,14 @@ POSIX_Init(void *argument)
   /* Unpack the rootfs */
   imfs_init();
 
-  /* Run /etc/rc.lua */
+  /* Run /etc/rc.lua/cmd */
   rc_init();
 
   /* Setup network, dispatch dhcp */
   network_init();
+
+  /* setup PATH */
+  path_init();
 
   /* Setup remote mounts */
   mounts_init();

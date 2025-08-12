@@ -37,8 +37,8 @@
 struct dhcp_runtime_cfg
 {
   char cmdline[1024];
-  char filename[1024];
-  char bootfile[1024];
+  char filename[512];
+  char bootfile[512];
   char interface[1024];
   char ntp1[64];
   char ntp2[64];
@@ -50,6 +50,9 @@ struct dhcp_runtime_cfg
   char hostname[128];
   char tftp_server[128];
   char timezone[64];
+  char mask[64];
+  char ip[64];
+  char routers[128];
   
   struct _event_s* event;
 };

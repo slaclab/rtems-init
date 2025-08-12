@@ -64,11 +64,11 @@ set(RTEMS_INIT_SRCS
     
 if ("${RTEMS_NETWORKING_STACK}" STREQUAL "LEGACY")
     list(APPEND RTEMS_INIT_SRCS 
-        src/net_legacy.c
+        src/net-legacy.c
     )
 elseif("${RTEMS_NETWORKING_STACK}" STREQUAL "BSD")
     list(APPEND RTEMS_INIT_SRCS
-        src/net_bsd.c
+        src/net-bsd.c
     )
 endif()
 

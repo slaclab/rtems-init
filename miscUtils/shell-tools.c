@@ -121,6 +121,8 @@ ls(const char* dir)
   char buf[PATH_MAX];
   if (!dir)
     dir = getcwd(buf, sizeof(buf));
+  else
+    strcpy(buf, dir);
 
   DIR* d = opendir(dir);
   if (!d) {
@@ -137,9 +139,9 @@ ls(const char* dir)
     }
     
     printf(
-      "%8lld, %8lldb, %5d.%-5d, %s\n",
-      (long long)st.st_ino,
-      (long long)st.st_size,
+      "%8llu, %8llub, %05d.%05d, %s\n",
+      (long long unsigned)st.st_ino,
+      (long long unsigned)st.st_size,
       st.st_uid,
       st.st_gid,
       e->d_name
