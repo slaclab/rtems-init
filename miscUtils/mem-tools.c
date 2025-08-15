@@ -27,8 +27,13 @@ workspaceUsage()
 	Heap_Information_block info;
 	_Protected_heap_Get_information(&_Workspace_Area, &info);
 
-	printf("Workspace usage: %.2fK used, %.2fK free, %.2fK total\n", info.Used.total / 1024.,
-		info.Free.total / 1024., (info.Free.total + info.Used.total) / 1024.f);
+  ssize_t total = info.Free.total + info.Used.total;
+	printf(
+    "Workspace usage: %.2fM (%.2fK) used, %.2fM (%.2fK) free, %.2fM (%.2fK) total\n", 
+    info.Used.total / 1024.*1024., info.Used.total / 1024.,
+		info.Free.total / 1024.*1024., info.Free.total / 1024.,
+    total / 1024.*1024., total / 1024.
+  );
 }
 
 extern Heap_Control* RTEMS_Malloc_Heap;
@@ -43,8 +48,8 @@ mallocStats()
   }
 
   printf("Malloc Stats:\n");
-  printf(" used:          %.2fK\n", info.Used.total / 1024.f);
-  printf(" free:          %.2fK\n", info.Free.total / 1024.f);
+  printf(" used:          %.2fM (%.2fK)\n", info.Used.total / 1024.*1024., info.Used.total / 1024.);
+  printf(" free:          %.2fM (%.2fK)\n", info.Free.total / 1024.*1024., info.Free.total / 1024.);
 	printf(" allocs:        %llu\n", (unsigned long long)info.Stats.allocs);
 	printf(" frees:         %llu\n", (unsigned long long)info.Stats.frees);
 	printf(" size:          %llu\n", (unsigned long long)info.Stats.size);

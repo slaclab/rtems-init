@@ -19,6 +19,7 @@
 #include "lua.h"
 
 #include "rtems-init.h"
+#include "util.h"
 
 #include "lua.h"
 
@@ -79,14 +80,29 @@ new_state()
 int
 lua_exec_script(const char* file)
 {
-  lua_State* L = new_state();
-  if (luaL_dofile(L, file) != LUA_OK) {
-    fprintf(stderr, "Script error: %s\n", lua_tostring(L, -1));
-    lua_close(L);
+  int r;
+
+  char olddir[PATH_MAX];
+  getcwd(olddir, sizeof(olddir));
+
+  char newdir[PATH_MAX];
+  strncpySafe(newdir, file, sizeof(newdir));
+  strip_filename(newdir);
+
+  if (chdir(newdir) < 0) {
+    kwarn("chdir to %s failed: %s\n", newdir, strerror(errno));
     return -1;
   }
+
+  lua_State* L = new_state();
+  if (luaL_dofile(L, file) != LUA_OK) {
+    kerror("Script error: %s\n", lua_tostring(L, -1));
+    r = -1;
+  }
   lua_close(L);
-  return 0;
+
+  chdir(olddir);
+  return r;
 }
 
 /* NOTE: The below code is taken from lua.c */

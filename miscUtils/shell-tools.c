@@ -135,11 +135,11 @@ ls(const char* dir)
     snprintf(cent, sizeof(cent), "%s/%s", buf, e->d_name);
     struct stat st;
     if (stat(cent, &st) < 0) {
-      perror("stat");
+      printf("stat: %s: %s", cent, strerror(errno));
     }
     
     printf(
-      "%8llu, %8llub, %05d.%05d, %s\n",
+      "0x%-16llX, %8llub, %05d.%05d, %s\n",
       (long long unsigned)st.st_ino,
       (long long unsigned)st.st_size,
       st.st_uid,
@@ -156,6 +156,36 @@ CEXP_HELP_TAB_BEGIN(ls)
 	HELP(
     "List directory entries\n",
 	  int, ls,  (const char* dir)
+	)CEXP_COMMA
+CEXP_HELP_TAB_END
+
+void
+dumpEnv()
+{
+  char** s = environ;
+  for (; s && *s; s++)
+    puts(*s);
+}
+
+CEXP_HELP_TAB_BEGIN(dumpEnv)
+	HELP(
+    "Dump all environment entries\n",
+	  void, dumpEnv,  (void)
+	)CEXP_COMMA
+CEXP_HELP_TAB_END
+
+void
+pwd()
+{
+  char buf[PATH_MAX];
+  getcwd(buf, sizeof(buf));
+  puts(buf);
+}
+
+CEXP_HELP_TAB_BEGIN(pwd)
+	HELP(
+    "Print current working directory\n",
+	  void, pwd,  (void)
 	)CEXP_COMMA
 CEXP_HELP_TAB_END
 

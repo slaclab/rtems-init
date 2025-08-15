@@ -104,7 +104,23 @@ extern void convert_mount_path(const char* path, char* out, size_t outsz);
  */
 extern void strip_filename(char* path);
 
+/**
+ * \brief Returns the extension of the file, or ""
+ */
+extern const char* path_get_extension(const char* path);
+
+/**
+ * \brief Returns 1 if a mountpoint is mounted
+ */
 extern int ismounted(const char* mntpt);
+
+enum script_type {
+  SCRIPT_UNKNOWN = -1,
+  SCRIPT_CEXPSH,
+  SCRIPT_LUA
+};
+
+enum script_type script_get_type(const char* path);
 
 typedef struct _event_s event_t;
 extern event_t* event_create();

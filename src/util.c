@@ -358,3 +358,22 @@ strip_filename(char* path)
   }
   *e = 0;
 }
+
+const char*
+path_get_extension(const char* path)
+{
+  const char* c = strrchr(path, '.');
+  if (!c) return "";
+  return c+1;
+}
+
+enum script_type
+script_get_type(const char* path)
+{
+  const char* ext = path_get_extension(path);
+  if (!strcasecmp(ext, "lua"))
+    return SCRIPT_LUA;
+  else if (!strcasecmp(ext, "cmd") || !strcasecmp(ext, "cexp"))
+    return SCRIPT_CEXPSH;
+  return SCRIPT_UNKNOWN;
+}

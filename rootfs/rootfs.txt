@@ -1,12 +1,13 @@
-# file              dest     permissions   owner:group
-etc/passwd          /        0644
-etc/group           /        0644
-etc/dhcpcd.conf     /        0644
-etc/leap-seconds    /        0644
-etc/ntp.conf        /        0644
-etc/services        /        0644
-etc/motd            /        0644
-etc/localtime       /        0644
-etc/libdl.conf      /        0644
-etc/hosts           /        0644
-etc/rc.cmd          /        0777
+# file                          dest     permissions   owner:group
+etc/passwd                      /        0644
+etc/group                       /        0644
+etc/dhcpcd.conf                 /        0644
+etc/leap-seconds                /        0644
+etc/ntp.conf                    /        0644
+etc/services                    /        0644
+etc/motd                        /        0644
+etc/localtime                   /        0644
+etc/libdl.conf                  /        0644
+etc/hosts                       /        0644
+etc/rc.cmd                      /        0777
+etc/init.d/S10modules.cmd       /        0777

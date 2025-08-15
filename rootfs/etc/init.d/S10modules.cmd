@@ -1,11 +1,7 @@
 #==========================================================#
-# Cexpsh Init Script
+# Load default modules for Cexpsh. Must be done after PATH
 #==========================================================#
 
-# useful abbreviations
-ld    = cexpModuleLoad
-unld  = cexpModuleUnload
-lsmod = cexpModuleInfo
-cd    = chdir
+ld ("miscUtils.obj")
 
 # End of script.

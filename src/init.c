@@ -62,6 +62,8 @@ int verbose = 1;
 
 enum init_mode init_mode = INIT_MODE_CMDLINE;
 
+char startup_script[PATH_MAX];
+
 /**
  * Do serial init tasks, mostly to disable certain types of control on stdin
  */
@@ -207,6 +209,9 @@ mounts_init()
       goto cmdline_mnt;
     }
 
+    /* Build startup script name */
+    snprintf(startup_script, sizeof(startup_script), "%s/%s", mntpt, file);
+
     if (ismounted(mntpt)) {
       kwarn("%s already mounted, skipping\n", mntpt);
       goto cmdline_mnt;
@@ -278,8 +283,6 @@ path_init()
     mntpt,
     file
   );
-
-  printf("PATH=%s\n", pathbuf);
 
   setenv("PATH", pathbuf, 1);
 }
@@ -376,11 +379,38 @@ rc_init()
 static int
 initd_dirent_filter(const struct dirent* de)
 {
-  const char* s = &de->d_name[de->d_namlen-1];
-  if (*s == '.') return 0;
-  for (; s > de->d_name && *s != '.' && *s; --s)
-    ;
-  return !strcmp(s, ".lua");
+  return 1;
+}
+
+int
+cexpsh_exec_script(const char* script)
+{
+#ifdef HAVE_CEXP
+  char dir[PATH_MAX];
+  strncpySafe(dir, script, sizeof(dir));
+  strip_filename(dir);
+
+  char olddir[PATH_MAX];
+  getcwd(olddir, sizeof(olddir));
+
+  if (chdir(dir) < 0) {
+    kwarn("chdir to %s failed: %s\n", dir, strerror(errno));
+    return -1;
+  }
+
+  /* TODO: Is this really needed? */
+  char path[PATH_MAX];
+  strncpySafe(path, script, sizeof(path));
+
+  klog("Running %s\n", script);
+  int r = cexpsh(path);
+
+  chdir(olddir);
+  return r;
+#else
+  klog("Cannot execute '%s': Cexpsh support not compiled in\n", script);
+  return -1;
+#endif
 }
 
 /**
@@ -389,7 +419,7 @@ initd_dirent_filter(const struct dirent* de)
 static void
 initd_init()
 {
-  int n;
+  int n, r;
   struct dirent** dirs = NULL;
   n = scandir(
     "/etc/init.d",
@@ -405,10 +435,55 @@ initd_init()
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "/etc/init.d/%s", dirs[i]->d_name);
     klog("Running %s\n", path);
-    lua_exec_script(path);
+
+    enum script_type type = script_get_type(dirs[i]->d_name);
+    switch (type) {
+    case SCRIPT_CEXPSH:
+      r = cexpsh_exec_script(path);
+      break;
+    case SCRIPT_LUA:
+      r = lua_exec_script(path);
+      break;
+    default:
+      continue;
+    }
+
+    if (r != 0)
+      kwarn("%s exited with %d\n", path, r);
+    else
+      klog("%s exited with %d\n", path, r);
   }
 
   free(dirs);
+}
+
+/**
+ * Execute the script given to us by BOOTP/DHCP
+ */
+void
+st_init()
+{
+  int r;
+  if (!*startup_script) {
+    kwarn("No BP_PARM script could be obtained, skipping\n");
+    return;
+  }
+
+  switch (script_get_type(startup_script)) {
+  case SCRIPT_LUA:
+    r = lua_exec_script(startup_script);
+    break;
+  default:
+    kwarn("Unknown script type for '%s' -- Treating as Cexpsh...\n", startup_script);
+  case SCRIPT_CEXPSH:
+    r = cexpsh_exec_script(startup_script);
+    break;
+  }
+
+  if (r != 0)
+    kerror("Script exited with %d\n", r);
+  else
+    klog("Script exited with %d\n", r);
 }
 
 /**
@@ -440,6 +515,9 @@ POSIX_Init(void *argument)
 
   /* Kick off scripts in /etc/init.d */
   initd_init();
+
+  /* Execute the startup script given by dhcp */
+  st_init();
 
   /* Start interactive shell */
   shell_init();
