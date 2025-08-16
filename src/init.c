@@ -104,17 +104,20 @@ static int
 do_mount(const char* ip, const char* src, const char* mntpt, 
   uint32_t uid, uint32_t gid, enum fstype type)
 {
-  const char* fs;
-  int vers = 2;
+  const char* fs = NULL;
+  int vers = 3, isnfs = 0;
   switch (type) {
   case FS_TYPE_NFS3:
     vers = 3, fs = RTEMS_FILESYSTEM_TYPE_NFS;
+    isnfs = 1;
     break;
   case FS_TYPE_NFS4:
     vers = 4, fs = RTEMS_FILESYSTEM_TYPE_NFS;
+    isnfs = 1;
     break;
   case FS_TYPE_NFS2:
     vers = 2, fs = RTEMS_FILESYSTEM_TYPE_NFS;
+    isnfs = 1;
     break;
   case FS_TYPE_9P:
     /** Unsupported for now */
@@ -158,9 +161,10 @@ do_mount(const char* ip, const char* src, const char* mntpt,
   snprintf(source, sizeof(source), "%s:%s", newip, src);
 
   char opts[512] = {0};
-  /** FIXME: uid gid? */
-  /** Always mounting these as read-only, data area should be rw  */
-  snprintf(opts, sizeof(opts), "vers=%d,ro", vers);
+  /* FIXME: uid gid? */
+  /* Always mounting these as read-only, data area should be rw  */
+  if (isnfs)
+    snprintf(opts, sizeof(opts), "vers=%d,ro", vers);
 
   if (mount(source, mntpt, fs, 0, opts) < 0)
     return -1;
@@ -185,13 +189,13 @@ mounts_init()
 
   klog("Setting up mounts\n");
 
-  /** Mount FS that includes the boot file */
+  /* Mount FS that includes the boot file */
   bp = getenv("BP_FILE");
   if (bp) {
     if (parse_mount_spec(bp, &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
       kerror("BP_FILE malformed, unable to parse\n");
     }
-    
+
     if (do_mount(ip, src, mntpt, uid, gid, fs) < 0) {
       kerror("Mount failed for %s:%s:%s\n", ip, src, mntpt);
     }
@@ -203,7 +207,7 @@ mounts_init()
     /** FIXME: actually parse this lol */
     if (!strncmp(bp, "INIT=", sizeof("INIT=")-1))
       bp += sizeof("INIT=")-1;
-    
+
     if (parse_mount_spec(bp, &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
       kerror("BP_PARM malformed, unable to parse\n");
       goto cmdline_mnt;
@@ -254,6 +258,11 @@ end:
 void
 path_init()
 {
+  /* dump all bootp/dhcp settings*/
+  klog("BOOTP Setting Summary:\n");
+  for (const char** s = bootp_params; *s; s++)
+    klog("%s=%s\n", *s, getenv(*s));
+
   const char* bpf = getenv("BP_FILE");
   if (!bpf)
     return;

@@ -40,7 +40,7 @@
 #define NVRAM_SIGN_SIZE (2*sizeof(uint16_t))
 
 /** List of valid NVRAM params, for systems where we can't arbitrarily iterate them */
-static const char* valid_params[] =
+const char* bootp_params[] =
 {
   "BP_MYIP",
   "BP_GTWY",
@@ -56,6 +56,9 @@ static const char* valid_params[] =
   "BP_NTP3",
   "BP_ENBL",
   "BP_DELY",
+  "BP_PARM",
+  "BP_FILE",
+  NULL,
 };
 
 /**
@@ -202,9 +205,9 @@ boot_param_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
 {
 #ifdef BSP_uC5282
 const char* s;
-for (int i = 0; i < sizeof(valid_params) / sizeof(valid_params[0]); ++i)
-  if ((s = bsp_getbenv(valid_params[i])))
-    parsed(valid_params[i], strlen(valid_params[i]), s, strlen(s));
+for (int i = 0; i < sizeof(bootp_params) / sizeof(bootp_params[0]); ++i)
+  if (bootp_params[i] && (s = bsp_getbenv(bootp_params[i])))
+    parsed(bootp_params[i], strlen(bootp_params[i]), s, strlen(s));
 return 0;
 #elif defined(BSP_NVRAM_BOOTPARMS_START)
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
@@ -221,9 +224,9 @@ boot_param_show_all()
 {
 #ifdef BSP_uC5282
   const char* s;
-  for (int i = 0; i < sizeof(valid_params) / sizeof(valid_params[0]); ++i)
-    if ((s = bsp_getbenv(valid_params[i])))
-      printf("%s=%s\n", valid_params[i], s);
+  for (int i = 0; i < sizeof(bootp_params) / sizeof(bootp_params[0]); ++i)
+    if (bootp_params[i] && (s = bsp_getbenv(bootp_params[i])))
+      printf("%s=%s\n", bootp_params[i], s);
   return 0;
 #elif defined(BSP_NVRAM_BOOTPARMS_START)
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
