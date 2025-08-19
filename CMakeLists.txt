@@ -32,6 +32,7 @@ rtems_check_include("sys/features.h" HAVE_SYS_FEATURES_H)
 rtems_check_include("link.h" HAVE_LINK_H)
 rtems_check_include("pthread.h" HAVE_PTHREADS)
 rtems_check_include("rtems/rtems/cache.h" HAVE_RTEMS_CACHE_H)
+set(USE_BESTLINE 1)
 
 configure_file(config.h.in config.h)
 
@@ -362,6 +363,7 @@ set(
 set(USE_PMBFD 1)
 set(ENABLE_LOADER 1)
 set(USE_TECLA 1)
+set(USE_BESTLINE 1)
 set(USE_ELFSYMS 0)
 set(USE_RTL 0)
 
@@ -371,7 +373,17 @@ if (USE_RTL)
 endif()
 
 # Tecla support
-if (USE_TECLA)
+if (USE_BESTLINE)
+    list(
+        APPEND CEXP_SRCS
+        cexp/bestline/bestline.c
+        cexp/bestline/bestline.h
+    )
+    list(
+        APPEND CEXP_DEFINES
+        "HAVE_BESTLINE=1"
+    )
+elseif (USE_TECLA)
     list(
         APPEND CEXP_SRCS
         cexp/teclastuff.c

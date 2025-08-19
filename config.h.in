@@ -55,7 +55,8 @@
 #undef HAVE_TYPE_UINT32_T
 #define HAVE_TYPE_UINT32_T 1
 
-#undef HAVE_TECLA
-#define HAVE_TECLA 1
+#undef HAVE_BESTLINE
+#define HAVE_BESTLINE @USE_BESTLINE@
+
 
 #endif // _CONFIG_H_ 
