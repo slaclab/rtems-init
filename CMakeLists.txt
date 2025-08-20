@@ -76,8 +76,14 @@ endif()
 set (USE_CEXP 1)
 rtems_add_executable(
     rtems-init
-    
+
     ${RTEMS_INIT_SRCS}
+)
+
+rtems_include_libs(
+    TARGET rtems-init
+    LIBS stdc++ c m
+    LIBDIRS "${CMAKE_BINARY_DIR}"
 )
 
 get_target_property(CURRENT_LINK_FLAGS rtems-init LINK_FLAGS)
@@ -109,6 +115,7 @@ target_link_libraries(
     rtemscxx
     rtemscpu
     rtemsbsp
+    stdc++
     c
     m
 )
