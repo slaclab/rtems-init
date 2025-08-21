@@ -82,7 +82,7 @@ rtems_add_executable(
 
 rtems_include_libs(
     TARGET rtems-init
-    LIBS stdc++ c m
+    LIBS rtemscxx rtemscpu c stdc++ cexp
     LIBDIRS "${CMAKE_BINARY_DIR}"
 )
 
