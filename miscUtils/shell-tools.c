@@ -20,6 +20,10 @@
 #include <fcntl.h>
 #include <sys/syslimits.h>
 #include <dirent.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <netinet/in.h>
 
 #ifdef HAVE_CEXP
 #include <cexpHelp.h>
@@ -139,7 +143,7 @@ ls(const char* dir)
     }
     
     printf(
-      "0x%-16llX, %8llub, %05d.%05d, %s\n",
+      "0x%016llX, %8llub, %05d.%05d, %s\n",
       (long long unsigned)st.st_ino,
       (long long unsigned)st.st_size,
       st.st_uid,
@@ -188,6 +192,63 @@ CEXP_HELP_TAB_BEGIN(pwd)
 	  void, pwd,  (void)
 	)CEXP_COMMA
 CEXP_HELP_TAB_END
+
+/* Helper to match behavior from RTEMS 4.X */
+int
+nfsMount(const char* ip, const char* src, const char* mntpt)
+{
+  char opts[256] = {0};
+  char newip[128];
+  char source[512];
+
+  /* skip UID.GID prefix, if any */
+  /* TODO: handle uid,gid */
+  const char* at = strchr(ip, '@');
+  if (at)
+    ip = at+1;
+
+  /* resolve host */
+  struct addrinfo* ai = NULL;
+  struct addrinfo hint = {0};
+  hint.ai_family = AF_INET;
+  hint.ai_flags = AI_PASSIVE;
+  if (getaddrinfo(ip, NULL, &hint, &ai) != 0) {
+    printf("do_mount: addr lookup failed: %s\n", strerror(errno));
+    return -1;
+  }
+
+  if (ai->ai_addr->sa_len != sizeof(struct sockaddr_in) || 
+      ai->ai_addr->sa_family != AF_INET) {
+    printf("do_mount: addr lookup failed, didn't get ipv4 addr\n");
+    freeaddrinfo(ai);
+    return -1;
+  }
+
+  struct sockaddr_in* si =
+    (struct sockaddr_in*)ai->ai_addr;
+  si->sin_addr.s_addr = ntohl(si->sin_addr.s_addr);
+  snprintf(newip, sizeof(newip), "%u.%u.%u.%u",
+    (si->sin_addr.s_addr & 0xFF000000) >> 24,
+    (si->sin_addr.s_addr & 0x00FF0000) >> 16,
+    (si->sin_addr.s_addr & 0x0000FF00) >> 8,
+    (si->sin_addr.s_addr & 0x000000FF));
+
+  freeaddrinfo(ai);
+
+  /* Ensure mount point exists */
+  rtems_mkdir(mntpt, 0777);
+
+  snprintf(source, sizeof(source), "%s:%s", newip, src);
+
+  strcpy(opts, "vers=3");
+
+  if (mount(source, mntpt, RTEMS_FILESYSTEM_TYPE_NFS, 0, opts) < 0) {
+    printf("mount: %s\n", strerror(errno));
+    return -1;
+  }
+
+  return 0;
+}
 
 void
 rtemsEntryPoint()
