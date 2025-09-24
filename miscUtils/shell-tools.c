@@ -134,21 +134,29 @@ ls(const char* dir)
     return -1;
   }
 
-  char cent[PATH_MAX];
+  char cent[PATH_MAX], tgt[PATH_MAX];
   for (struct dirent* e = readdir(d); e; e = readdir(d)) {
     snprintf(cent, sizeof(cent), "%s/%s", buf, e->d_name);
     struct stat st;
-    if (stat(cent, &st) < 0) {
-      printf("stat: %s: %s", cent, strerror(errno));
+    if (lstat(cent, &st) < 0) {
+      printf("stat: %s: %s\n", cent, strerror(errno));
     }
-    
+
+    int islink = S_ISLNK(st.st_mode);
+    if (islink) {
+      if (readlink(cent, tgt, sizeof(tgt)) < 0)
+        islink = 0;
+    }
+
     printf(
-      "0x%016llX, %8llub, %05d.%05d, %s\n",
+      "0x%016llX, %8llub, %05d.%05d, %s%s%s\n",
       (long long unsigned)st.st_ino,
       (long long unsigned)st.st_size,
       st.st_uid,
       st.st_gid,
-      e->d_name
+      e->d_name,
+      islink ? " -> " : "",
+      islink ? tgt : ""
     );
   }
 
