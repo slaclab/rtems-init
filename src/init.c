@@ -335,6 +335,12 @@ shell_init()
   }
 
 #ifdef HAVE_CEXP
+  /* Set prompt to correspond to IOC name */
+  char prompt[128];
+  snprintf(prompt, sizeof(prompt), "%s> ", getenv("BP_MYNM"));
+  cexpSetPrompt(CEXP_PROMPT_GBL, prompt);
+
+  /* start interactive shell */
   cexpsh(NULL);
 #else
 
