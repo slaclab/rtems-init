@@ -114,6 +114,11 @@ extern const char* path_get_extension(const char* path);
  */
 extern int ismounted(const char* mntpt);
 
+/**
+ * \brief Returns a textual representation of the BSP's name
+ */
+extern const char* bsp_get_name();
+
 enum script_type {
   SCRIPT_UNKNOWN = -1,
   SCRIPT_CEXPSH,

@@ -260,8 +260,10 @@ path_init()
 {
   /* dump all bootp/dhcp settings*/
   klog("BOOTP Setting Summary:\n");
-  for (const char** s = bootp_params; *s; s++)
-    klog("%s=%s\n", *s, getenv(*s));
+  for (const char** s = bootp_params; *s; s++) {
+    const char* e = getenv(*s);
+    klog("%s=%s\n", *s, e ? e : "");
+  }
 
   const char* bpf = getenv("BP_FILE");
   if (!bpf)
@@ -337,7 +339,8 @@ shell_init()
 #ifdef HAVE_CEXP
   /* Set prompt to correspond to IOC name */
   char prompt[128];
-  snprintf(prompt, sizeof(prompt), "%s> ", getenv("BP_MYNM"));
+  const char* name = getenv("BSP_MYNM");
+  snprintf(prompt, sizeof(prompt), "%s>", name ? name : bsp_get_name());
   cexpSetPrompt(CEXP_PROMPT_GBL, prompt);
 
   /* start interactive shell */

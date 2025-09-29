@@ -377,3 +377,19 @@ script_get_type(const char* path)
     return SCRIPT_CEXPSH;
   return SCRIPT_UNKNOWN;
 }
+
+const char*
+bsp_get_name()
+{
+#ifdef BSP_beatnik
+  return "mvme6100";
+#elif defined(BSP_mvme3100)
+  return "mvme3100";
+#elif defined(BSP_pc686)
+  return "rtems-pc686";
+#elif defined(BSP_uC5282)
+  return "uC5282";
+#else
+  #error "Please add an entry to bsp_get_name"
+#endif
+}
