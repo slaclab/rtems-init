@@ -344,7 +344,9 @@ shell_init()
   cexpSetPrompt(CEXP_PROMPT_GBL, prompt);
 
   /* start interactive shell */
-  cexpsh(NULL);
+  while (1) {
+    cexpsh(NULL);
+  }
 #else
 
   rtems_status_code r;
