@@ -2,11 +2,11 @@
 	path = tools
 	url = git@github.com:JJL772/rtems-tools.git
 [submodule "bspExt"]
-	path = bspExt
+	path = modules/bspExt
 	url = git@github.com:slaclab/rtems-libbspExt.git
 [submodule "cexp"]
-	path = cexp
+	path = modules/cexp
 	url = git@github.com:slaclab/cexpsh.git
 [submodule "lua"]
-	path = lua
+	path = modules/lua
 	url = https://github.com/JJL772/lua.git

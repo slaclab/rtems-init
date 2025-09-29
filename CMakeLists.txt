@@ -528,8 +528,8 @@ endif()
 # miscUtils
 ###################################################
 set(MISCUTILS_SRCS
-    miscUtils/shell-tools.c
-    miscUtils/mem-tools.c
+    modules/miscUtils/shell-tools.c
+    modules/miscUtils/mem-tools.c
 )
 
 rtems_add_object(
