@@ -59,8 +59,8 @@ set(RTEMS_INIT_SRCS
     src/test/nfs-perf.c
 
     # Lua
-    lua/onelua.c
-    lua/lua.c
+    modules/lua/onelua.c
+    modules/lua/lua.c
 )
     
 if ("${RTEMS_NETWORKING_STACK}" STREQUAL "LEGACY")
@@ -139,9 +139,9 @@ target_include_directories(
 # regexp (submoduled in cexp)
 ###################################################
 set(REGEXP_SRCS
-    cexp/regexp/regexp.c
-    cexp/regexp/regerror.c
-    cexp/regexp/regsub.c
+    modules/cexp/regexp/regexp.c
+    modules/cexp/regexp/regerror.c
+    modules/cexp/regexp/regsub.c
 )
 
 add_library(
@@ -156,46 +156,46 @@ install(
 # pmelf (submoduled in cexp)
 ###################################################
 set(PMELF_SRCS
-    "cexp/pmbfd/symname.c"
-    "cexp/pmbfd/secname.c"
-    "cexp/pmbfd/putdat.c"
-    "cexp/pmbfd/dmpgrps.c"
-    "cexp/pmbfd/strm.c"
-    "cexp/pmbfd/fstrm.c"
-    "cexp/pmbfd/mstrm.c"
-    "cexp/pmbfd/dmpsym.c"
-    "cexp/pmbfd/dmpsymtab.c"
-    "cexp/pmbfd/dmpshdr.c"
-    "cexp/pmbfd/dmpshtab.c"
-    "cexp/pmbfd/dmpehdr.c"
-    "cexp/pmbfd/dmprels.c"
-    "cexp/pmbfd/dmpphdr.c"
-    "cexp/pmbfd/symtab.c"
-    "cexp/pmbfd/findsymhdrs.c"
-    "cexp/pmbfd/shtab.c"
-    "cexp/pmbfd/getgrp.c"
-    "cexp/pmbfd/getrel.c"
-    "cexp/pmbfd/getscn.c"
-    "cexp/pmbfd/getsym.c"
-    "cexp/pmbfd/putsym.c"
-    "cexp/pmbfd/getshdr.c"
-    "cexp/pmbfd/getphdr.c"
-    "cexp/pmbfd/putshdr.c"
-    "cexp/pmbfd/getehdr.c"
-    "cexp/pmbfd/putehdr.c"
-    "cexp/pmbfd/attpbfasmatch.c"
-    "cexp/pmbfd/attpbfasdestroy.c"
-    "cexp/pmbfd/attpbfasread.c"
-    "cexp/pmbfd/attpbfasprint.c"
-    "cexp/pmbfd/attpbfaprint.c"
-    "cexp/pmbfd/attpbprinttag.c"
-    "cexp/pmbfd/attset.c"
-    "cexp/pmbfd/attprint.c"
-    "cexp/pmbfd/attvendfind.c"
-    "cexp/pmbfd/guleb128.c"
-    "cexp/pmbfd/getwrd.c"
-    "cexp/pmbfd/att-gnu-powerpc.c"
-    "cexp/pmbfd/noelf64.c" # TODO: NO_64BIT
+    "modules/cexp/pmbfd/symname.c"
+    "modules/cexp/pmbfd/secname.c"
+    "modules/cexp/pmbfd/putdat.c"
+    "modules/cexp/pmbfd/dmpgrps.c"
+    "modules/cexp/pmbfd/strm.c"
+    "modules/cexp/pmbfd/fstrm.c"
+    "modules/cexp/pmbfd/mstrm.c"
+    "modules/cexp/pmbfd/dmpsym.c"
+    "modules/cexp/pmbfd/dmpsymtab.c"
+    "modules/cexp/pmbfd/dmpshdr.c"
+    "modules/cexp/pmbfd/dmpshtab.c"
+    "modules/cexp/pmbfd/dmpehdr.c"
+    "modules/cexp/pmbfd/dmprels.c"
+    "modules/cexp/pmbfd/dmpphdr.c"
+    "modules/cexp/pmbfd/symtab.c"
+    "modules/cexp/pmbfd/findsymhdrs.c"
+    "modules/cexp/pmbfd/shtab.c"
+    "modules/cexp/pmbfd/getgrp.c"
+    "modules/cexp/pmbfd/getrel.c"
+    "modules/cexp/pmbfd/getscn.c"
+    "modules/cexp/pmbfd/getsym.c"
+    "modules/cexp/pmbfd/putsym.c"
+    "modules/cexp/pmbfd/getshdr.c"
+    "modules/cexp/pmbfd/getphdr.c"
+    "modules/cexp/pmbfd/putshdr.c"
+    "modules/cexp/pmbfd/getehdr.c"
+    "modules/cexp/pmbfd/putehdr.c"
+    "modules/cexp/pmbfd/attpbfasmatch.c"
+    "modules/cexp/pmbfd/attpbfasdestroy.c"
+    "modules/cexp/pmbfd/attpbfasread.c"
+    "modules/cexp/pmbfd/attpbfasprint.c"
+    "modules/cexp/pmbfd/attpbfaprint.c"
+    "modules/cexp/pmbfd/attpbprinttag.c"
+    "modules/cexp/pmbfd/attset.c"
+    "modules/cexp/pmbfd/attprint.c"
+    "modules/cexp/pmbfd/attvendfind.c"
+    "modules/cexp/pmbfd/guleb128.c"
+    "modules/cexp/pmbfd/getwrd.c"
+    "modules/cexp/pmbfd/att-gnu-powerpc.c"
+    "modules/cexp/pmbfd/noelf64.c" # TODO: NO_64BIT
 )
 
 add_library(
@@ -203,7 +203,7 @@ add_library(
 )
 
 target_include_directories(
-    pmelf PRIVATE cexp/pmbfd
+    pmelf PRIVATE modules/cexp/pmbfd
 )
 
 install(
@@ -211,7 +211,7 @@ install(
 )
 
 install(
-    FILES "cexp/pmbfd/pmelf.h"
+    FILES "modules/cexp/pmbfd/pmelf.h"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
 
@@ -219,9 +219,9 @@ install(
 # pmbfd
 ###################################################
 set(PMBFD_SRCS
-    "cexp/pmbfd/bfd.c"
-    "cexp/pmbfd/opcodesup.c"
-    "cexp/pmbfd/bfd-reloc-${RTEMS_ARCH}.c"
+    "modules/cexp/pmbfd/bfd.c"
+    "modules/cexp/pmbfd/opcodesup.c"
+    "modules/cexp/pmbfd/bfd-reloc-${RTEMS_ARCH}.c"
 )
 
 add_library(
@@ -240,24 +240,24 @@ install(
 # libtecla
 ###################################################
 set(TECLA_SRCS
-    "cexp/libtecla/chrqueue.c"
-    "cexp/libtecla/cplfile.c"
-    "cexp/libtecla/cplmatch.c"
-    "cexp/libtecla/direader.c"
-    "cexp/libtecla/errmsg.c"
-    "cexp/libtecla/expand.c"
-    "cexp/libtecla/freelist.c"
-    "cexp/libtecla/getline.c"
-    "cexp/libtecla/hash.c"
-    "cexp/libtecla/history.c"
-    "cexp/libtecla/homedir.c"
-    "cexp/libtecla/ioutil.c"
-    "cexp/libtecla/keytab.c"
-    "cexp/libtecla/pathutil.c"
-    "cexp/libtecla/pcache.c"
-    "cexp/libtecla/stringrp.c"
-    "cexp/libtecla/strngmem.c"
-    "cexp/libtecla/version.c"
+    "modules/cexp/libtecla/chrqueue.c"
+    "modules/cexp/libtecla/cplfile.c"
+    "modules/cexp/libtecla/cplmatch.c"
+    "modules/cexp/libtecla/direader.c"
+    "modules/cexp/libtecla/errmsg.c"
+    "modules/cexp/libtecla/expand.c"
+    "modules/cexp/libtecla/freelist.c"
+    "modules/cexp/libtecla/getline.c"
+    "modules/cexp/libtecla/hash.c"
+    "modules/cexp/libtecla/history.c"
+    "modules/cexp/libtecla/homedir.c"
+    "modules/cexp/libtecla/ioutil.c"
+    "modules/cexp/libtecla/keytab.c"
+    "modules/cexp/libtecla/pathutil.c"
+    "modules/cexp/libtecla/pcache.c"
+    "modules/cexp/libtecla/stringrp.c"
+    "modules/cexp/libtecla/strngmem.c"
+    "modules/cexp/libtecla/version.c"
 )
 
 add_library(
@@ -298,8 +298,8 @@ add_custom_target(cexp_gentab
     BYPRODUCTS "${CMAKE_BINARY_DIR}/cexp/gentab"
     COMMAND mkdir -p "${CMAKE_BINARY_DIR}/cexp" &&
         cc -o "${CMAKE_BINARY_DIR}/cexp/gentab"
-        "${SRCDIR}/cexp/gentab.c"
-    DEPENDS "${SRCDIR}/cexp/gentab.c"
+        "${SRCDIR}/modules/cexp/gentab.c"
+    DEPENDS "${SRCDIR}/modules/cexp/gentab.c"
 )
 
 # Generate the jumptab
@@ -318,8 +318,8 @@ add_custom_command(
         bison -v -d -p cexp
         -o "${CMAKE_BINARY_DIR}/cexp/cexp.tab.c"
         --header="${CMAKE_BINARY_DIR}/cexp/cexp.tab.h"
-        "${SRCDIR}/cexp/cexp.y"
-    DEPENDS "${SRCDIR}/cexp/cexp.y"
+        "${SRCDIR}/modules/cexp/cexp.y"
+    DEPENDS "${SRCDIR}/modules/cexp/cexp.y"
 )
 
 set(
@@ -341,26 +341,26 @@ set(
 
 set(
     CEXP_INCLUDES
-    "cexp"
-    "cexp/regexp"
+    "modules/cexp"
+    "modules/cexp/regexp"
     "${CMAKE_BINARY_DIR}/cexp" # Needed for cexp.tab.h
 )
 
 set(
     CEXP_SRCS
-    "cexp/cexp.c"
-    "cexp/ctyps.c"
-    "cexp/cexpsyms.c"
-    "cexp/vars.c"
-    "cexp/rshload.c"
-    "cexp/cexplock.c"
-    "cexp/cexpmod.c"
-    "cexp/cexpveneer.c"
-    "cexp/getopt/mygetopt_r.c"
-    "cexp/help.c"
-    "cexp/cexpsegs.c"
-    "cexp/cexpsegs-alloc.c"
-    "cexp/wrap.c"
+    "modules/cexp/cexp.c"
+    "modules/cexp/ctyps.c"
+    "modules/cexp/cexpsyms.c"
+    "modules/cexp/vars.c"
+    "modules/cexp/rshload.c"
+    "modules/cexp/cexplock.c"
+    "modules/cexp/cexpmod.c"
+    "modules/cexp/cexpveneer.c"
+    "modules/cexp/getopt/mygetopt_r.c"
+    "modules/cexp/help.c"
+    "modules/cexp/cexpsegs.c"
+    "modules/cexp/cexpsegs-alloc.c"
+    "modules/cexp/wrap.c"
     
     # Generated sources
     "${CMAKE_BINARY_DIR}/cexp/cexp.tab.c"
@@ -383,8 +383,8 @@ endif()
 if (USE_BESTLINE)
     list(
         APPEND CEXP_SRCS
-        cexp/bestline/bestline.c
-        cexp/bestline/bestline.h
+        modules/cexp/bestline/bestline.c
+        modules/cexp/bestline/bestline.h
     )
     list(
         APPEND CEXP_DEFINES
@@ -393,11 +393,11 @@ if (USE_BESTLINE)
 elseif (USE_TECLA)
     list(
         APPEND CEXP_SRCS
-        cexp/teclastuff.c
+        modules/cexp/teclastuff.c
     )
     list(
         APPEND CEXP_INCLUDES
-        cexp/libtecla
+        modules/cexp/libtecla
     )
     list(
         APPEND CEXP_LIBS
@@ -419,13 +419,13 @@ if (ENABLE_LOADER)
 elseif (USE_ELFSYMS)
     list(
         APPEND CEXP_SRCS
-        cexp/elfsyms.c
-        cexp/elfdlmap.c
+        modules/cexp/elfsyms.c
+        modules/cexp/elfdlmap.c
     )
 else()
     list(
         APPEND CEXP_SRCS
-        cexp/noloader.c
+        modules/cexp/noloader.c
     )
 endif()
 
@@ -443,11 +443,11 @@ if (USE_PMBFD)
     )
     list(
         APPEND CEXP_INCLUDES
-        "cexp/pmbfd"
+        "modules/cexp/pmbfd"
     )
     list(
         APPEND CEXP_SRCS
-        "cexp/bfdstuff.c"
+        "modules/cexp/bfdstuff.c"
     )
 endif()
 
@@ -459,7 +459,7 @@ if (USE_RTL)
     )
     list(
         APPEND CEXP_SRCS
-        "cexp/cexprtl.c"
+        "modules/cexp/cexprtl.c"
     )
 endif()
 
@@ -493,10 +493,10 @@ install(
 
 install(
     FILES
-        "cexp/cexp.h"
-        "cexp/cexpHelp.h"
-        "cexp/ctyps.h"
-        "cexp/cexpsyms.h"
+        "modules/cexp/cexp.h"
+        "modules/cexp/cexpHelp.h"
+        "modules/cexp/ctyps.h"
+        "modules/cexp/cexpsyms.h"
     DESTINATION
         "${CMAKE_INSTALL_INCLUDEDIR}"
 )
@@ -505,10 +505,10 @@ install(
 # libbspExt
 ###################################################
 set(BSPEXT_SRCS
-    bspExt/isrWrap.c
-    bspExt/memProbe.c
-    bspExt/dabrBpnt.c
-    bspExt/bspExt.c
+    modules/bspExt/isrWrap.c
+    modules/bspExt/memProbe.c
+    modules/bspExt/dabrBpnt.c
+    modules/bspExt/bspExt.c
 )
 
 if ("${RTEMS_ARCH}" STREQUAL "powerpc")
@@ -519,7 +519,7 @@ if ("${RTEMS_ARCH}" STREQUAL "powerpc")
     )
 
     install(
-        FILES "bspExt/bspExt.h"
+        FILES "modules/bspExt/bspExt.h"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bsp"
     )
 endif()
