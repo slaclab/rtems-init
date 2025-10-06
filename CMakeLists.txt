@@ -132,7 +132,7 @@ target_compile_definitions(
 target_include_directories(
     rtems-init PRIVATE
     
-    lua
+    modules/lua
 )
 
 ###################################################
@@ -229,7 +229,7 @@ add_library(
 )
 
 target_include_directories(
-    pmbfd PRIVATE cexp/pmbfd
+    pmbfd PRIVATE modules/cexp/pmbfd
 )
 
 install(
@@ -484,7 +484,7 @@ target_compile_definitions(
 )
 
 target_include_directories(
-    cexp PUBLIC cexp
+    cexp PUBLIC modules/cexp
 )
 
 install(
@@ -539,7 +539,7 @@ rtems_add_object(
 )
 
 target_include_directories(
-    miscUtils PRIVATE "cexp"
+    miscUtils PRIVATE modules/cexp
 )
 
 target_compile_definitions(
