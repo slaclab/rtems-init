@@ -32,6 +32,9 @@ rtems_check_include("sys/features.h" HAVE_SYS_FEATURES_H)
 rtems_check_include("link.h" HAVE_LINK_H)
 rtems_check_include("pthread.h" HAVE_PTHREADS)
 rtems_check_include("rtems/rtems/cache.h" HAVE_RTEMS_CACHE_H)
+rtems_check_lib("debugger" "rtems_debugger_start" HAVE_DEBUGGER)
+rtems_check_include("rtems/bsd/bsd.h" HAVE_BSD_NETWORKING)
+rtems_check_include("rtems/bsdnet/servers.h" HAVE_LEGACY_NETWORKING)
 set(USE_BESTLINE 1)
 
 configure_file(config.h.in config.h)
@@ -102,7 +105,19 @@ rtems_add_rootfs(
 if ("${RTEMS_BSP}" STREQUAL "mvme3100")
     #rtems_add_dts(rtems-init src/fdt/mvme3100.dts)
 endif()
-    
+
+if (HAVE_DEBUGGER)
+    target_link_libraries(
+        rtems-init PRIVATE debugger
+    )
+endif()
+
+if (HAVE_BSD_NETWORKING)
+    set(NETWORK_LIB "bsd")
+elseif (HAVE_LEGACY_NETWORKING)
+    set(NETWORK_LIB "networking")
+endif()
+
 target_link_libraries(
     rtems-init PRIVATE
     
@@ -110,8 +125,7 @@ target_link_libraries(
     ntp
     telnetd
     tftpfs
-    bsd
-    debugger
+    ${NETWORK_LIB}
     rtemscxx
     rtemscpu
     rtemsbsp
