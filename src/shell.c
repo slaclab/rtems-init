@@ -450,6 +450,7 @@ shell_getifaddrs(int argc, char** argv)
   return 0;
 }
 
+#ifdef HAVE_PCI
 int
 lspci()
 {
@@ -491,8 +492,16 @@ CEXP_HELP_TAB_BEGIN(lspci)
 	),
 CEXP_HELP_TAB_END
 
+#endif // HAVE_PCI
+
 static int
 shell_pci_probe(int argc, char** argv)
 {
+#ifdef HAVE_PCI
   return lspci();
+#else
+  printf("PCI not supported by this BSP\n");
+  return -1;
+#endif
 }
+

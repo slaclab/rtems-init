@@ -58,5 +58,11 @@
 #undef HAVE_BESTLINE
 #define HAVE_BESTLINE @USE_BESTLINE@
 
+#undef HAVE_PCI
+#define HAVE_PCI @HAVE_PCI@
+
+#ifdef RTEMS_BSD_STACK
+#define HAVE_POLL 1
+#endif
 
 #endif // _CONFIG_H_ 

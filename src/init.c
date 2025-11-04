@@ -369,7 +369,15 @@ shell_init()
 void
 early_init()
 {
-#ifdef BSP_mvme3100
+#ifdef BSP_uC5282
+  /* hack to workaround missing SYS_CLOCK_SPEED. seems like autodetection
+   * of clock speed fails more often than not. Just assume 64MHz for now */
+  if (!bsp_getbenv("SYS_CLOCK_SPEED")) {
+    printk("SYS_CLOCK_SPEED not set in bootloader env, defaulting to 64MHz\n");
+    extern uint32_t BSP_sys_clk_speed;
+    BSP_sys_clk_speed = 64000000;
+  }
+#elif defined(BSP_mvme3100)
   //printf("** Setting fdt\n");
   //bsp_fdt_copy(system_dtb);
 #endif

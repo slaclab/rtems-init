@@ -53,7 +53,9 @@ extern void *POSIX_Init(void *argument);
 /** Enable various filesystem backends */;
 #define CONFIGURE_FILESYSTEM_DEVFS
 #define CONFIGURE_FILESYSTEM_TFTPFS
+#ifndef RTEMS_LEGACY_STACK
 #define CONFIGURE_FILESYSTEM_NFS
+#endif
 #define CONFIGURE_FILESYSTEM_IMFS
 
 /****************************************************************************\

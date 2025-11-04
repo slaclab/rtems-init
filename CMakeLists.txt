@@ -35,6 +35,7 @@ rtems_check_include("rtems/rtems/cache.h" HAVE_RTEMS_CACHE_H)
 rtems_check_lib("debugger" "rtems_debugger_start" HAVE_DEBUGGER)
 rtems_check_include("rtems/bsd/bsd.h" HAVE_BSD_NETWORKING)
 rtems_check_include("rtems/bsdnet/servers.h" HAVE_LEGACY_NETWORKING)
+rtems_check_lib("pci_initialize" "pci_read_config_word" HAVE_PCI)
 set(USE_BESTLINE 1)
 
 configure_file(config.h.in config.h)
