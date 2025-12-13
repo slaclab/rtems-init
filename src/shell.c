@@ -56,6 +56,8 @@
 #include "getopt_s.h"
 #include "util.h"
 
+#include "config.h"
+
 static int shell_debugger_start(int,char**);
 static int shell_debugger_stop(int argc, char** argv);
 static int shell_read_temp(int argc, char** argv);
@@ -481,7 +483,299 @@ lspci()
       }
     }
   }
+  return 0;
+}
+
+struct pci_device_name
+{
+  uint16_t id;
+  const char* name;
+};
+
+struct pci_device_name INTEL_DEVICES[] =
+{
+  {0x1008, "82544EI Gigabit Ethernet Controller (Copper)"},
+  {0xFFFF, NULL}
+};
+
+struct pci_device_name TUNDRA_DEVICES[] =
+{
+  {0x0000, "CA91C042 [Universe]"},
+  {0xFFFF, NULL}
+};
+
+struct pci_device_name HINT_DEVICES[] =
+{
+  {0x0026, "HB2 PCI-PCI Bridge"},
+  {0xFFFF, NULL}
+};
+
+struct pci_device_name MARVELL_DEVICES[] =
+{
+  {0x6430, "MV64360 System Controller"},
+  {0xFFFF, NULL}
+};
+
+static struct
+{
+  uint16_t vendor;
+  const char* name;
+  struct pci_device_name* devices;
+} VENDOR_LOOKUP[] =
+{
+  {0x3388, "HiNT Corp.", HINT_DEVICES},
+  {0x8086, "Intel Corp.", INTEL_DEVICES},
+  {0x10e3, "Tundra Semiconductor Corp.", TUNDRA_DEVICES},
+  {0x11ab, "Marvell Technology Group Ltd.", MARVELL_DEVICES},
+};
+
+static int
+pci_describe_device(uint16_t vendor, uint16_t device, const char** vname, const char** dname)
+{
+  *vname = "Unknown Vendor";
+  *dname = "Unknown Device";
+  for (int i = 0; i < sizeof(VENDOR_LOOKUP)/sizeof(VENDOR_LOOKUP[0]); ++i) {
+    if (vendor == VENDOR_LOOKUP[i].vendor) {
+      *vname = VENDOR_LOOKUP[i].name;
+      for (int j = 0; ; ++j) {
+        if (VENDOR_LOOKUP[i].devices[j].id == 0xFFFF)
+          return -1;
+        if (VENDOR_LOOKUP[i].devices[j].id == device) {
+          *dname = VENDOR_LOOKUP[i].devices[j].name;
+          return 0;
+        }
+      }
+    }
+  }
+  return -1;
+}
+
+static struct
+{
+  const char* name;
+  uint32_t flag;
+} PCI_STATUS_BITS[] =
+{
+  {"66MHz",       PCI_STATUS_66MHZ},
+  {"UDF",         PCI_STATUS_UDF},
+  {"FastB2B",     PCI_STATUS_FAST_BACK},
+  {"ParErr",      PCI_STATUS_PARITY},
+  {"SigTgtAbrt",  PCI_STATUS_SIG_TARGET_ABORT},
+  {"RecTgtAbrt",  PCI_STATUS_REC_TARGET_ABORT},
+  {"RecMstrAbrt", PCI_STATUS_REC_MASTER_ABORT},
+  {"SigSysErr",   PCI_STATUS_SIG_SYSTEM_ERROR},
+  {"SPerr",       PCI_STATUS_DETECTED_PARITY},
+};
+
+static int
+print_pci_dev(int bus, int slot, int func, int vend, int dev)
+{
+  const char* typestr = "Unknown";
+  int barCount = 1;
+  uint8_t type = 0;
+  if (pci_read_config_byte(bus, slot, func, PCI_HEADER_TYPE, &type) == 0) {
+    switch (type) {
+    case PCI_HEADER_TYPE_NORMAL:
+      typestr = "PCI Device";
+      barCount = 6;
+      break;
+    case PCI_HEADER_TYPE_BRIDGE:
+      typestr = "PCI Bridge Device";
+      barCount = 2;
+      break;
+    case PCI_HEADER_TYPE_CARDBUS:
+      typestr = "CardBus Device"; break;
+    case PCI_HEADER_TYPE_MULTI_FUNCTION:
+      typestr = "Multifunction Device"; break;
+    default:
+      typestr = "Invalid Device Type";
+    }
+  }
+
+  const char *vname, *dname;
+  pci_describe_device(vend, dev, &vname, &dname);
+
+  printf(
+    "%02d:%02d.%d %s: Vendor 0x%04X Device 0x%04X: %s %s\n",
+    bus, slot, func, typestr, vend, dev, vname, dname
+  );
+
+  /* Display IRQ pin */
+  uint8_t irq_pin = 0, irq_line = 0;
+  pci_read_config_byte(bus, slot, func, PCI_INTERRUPT_PIN, &irq_pin);
+  pci_read_config_byte(bus, slot, func, PCI_INTERRUPT_LINE, &irq_line);
+  printf("  IRQ %d, IRQ Pin %d\n", irq_line, irq_pin);
+
+  /* Display class/subclass */
+  uint16_t classsubclass = 0;
+  pci_read_config_word(bus, slot, func, PCI_CLASS_DEVICE, &classsubclass);
+  uint8_t progif = 0;
+  pci_read_config_byte(bus, slot, func, PCI_REVISION_ID, &progif);
+  printf(
+    "  Class: 0x%02X, Subclass: 0x%02X, Prog I/F: 0x%02X\n",
+    (classsubclass & 0xFF00) >> 8,
+    (classsubclass & 0xFF),
+    progif
+  );
+
+  /* mirrors lspci format of status bits */
+  printf("  Status: ");
+  uint16_t status = 0;
+  if (pci_read_config_word(bus, slot, func, PCI_STATUS, &status) != 0)
+    printf("<Unable to read>");
+  else {
+    for (int i = 0; i < sizeof(PCI_STATUS_BITS) / sizeof(PCI_STATUS_BITS[0]); ++i) {
+      printf(
+        "%s%s ",
+        PCI_STATUS_BITS[i].name,
+        (status & PCI_STATUS_BITS[i].flag) ? "+" : "-"
+      );
+    }
+  }
+  printf("\n");
   
+  /* display BAR registers */
+  const uint32_t bars[] = {
+    PCI_BASE_ADDRESS_0,
+    PCI_BASE_ADDRESS_1,
+    PCI_BASE_ADDRESS_2,
+    PCI_BASE_ADDRESS_3,
+    PCI_BASE_ADDRESS_4,
+    PCI_BASE_ADDRESS_5,
+  };
+  
+  for (int i = 0; i < barCount; ++i) {
+    printf("  BAR%d: ", i);
+    uint32_t bar;
+    if (0 != pci_read_config_dword(bus, slot, func, bars[i], &bar)) {
+      printf("<Unable to read>\n");
+      continue;
+    }
+
+    /* mem type and prefetchable flags are only valid for non-I/O spaces */
+    if (bar & PCI_BASE_ADDRESS_SPACE_IO) {
+      printf(
+        "0x%08lX (I/O Mem, 32-bits, non-prefetchable)",
+        bar & PCI_BASE_ADDRESS_IO_MASK
+      );
+    }
+    else {
+      /* display mem type */
+      printf(
+        "0x%08lX (",
+        bar & PCI_BASE_ADDRESS_MEM_MASK
+      );
+      switch (bar & PCI_BASE_ADDRESS_MEM_TYPE_MASK) {
+      case PCI_BASE_ADDRESS_MEM_TYPE_1M:
+        printf("20-bit"); break;
+      case PCI_BASE_ADDRESS_MEM_TYPE_32:
+        printf("32-bit"); break;
+      case PCI_BASE_ADDRESS_MEM_TYPE_64:
+        printf("64-bit"); break;
+      }
+
+      /* display prefetchable or not */
+      printf(
+        ", %s) ",
+        (bar & PCI_BASE_ADDRESS_MEM_PREFETCH) ? "prefetchable" : "non-prefetchable"
+      );
+    }
+
+    /* bar size cannot be easily determined without clobbering the register, so skipping it */
+    printf("\n");
+  }
+  
+  /* type 1 options */
+  if (type == PCI_HEADER_TYPE_BRIDGE) {
+    uint8_t primaryBus = 0, secondaryBus = 0;
+    uint8_t subBus = 0;
+    pci_read_config_byte(bus, slot, func, PCI_PRIMARY_BUS, &primaryBus);
+    pci_read_config_byte(bus, slot, func, PCI_SECONDARY_BUS, &secondaryBus);
+    pci_read_config_byte(bus, slot, func, PCI_SUBORDINATE_BUS, &subBus);
+    printf(
+      "  Primary Bus: %d, Secondary Bus: %d, Subordinate: %d\n",
+      primaryBus, secondaryBus, subBus
+    );
+
+    uint16_t memLimit = 0, memBase = 0;
+    pci_read_config_word(bus, slot, func, PCI_MEMORY_BASE, &memBase);
+    pci_read_config_word(bus, slot, func, PCI_MEMORY_LIMIT, &memLimit);
+
+    /* aligned to 1MB boundary */
+    printf(
+      "  Memory Behind Bridge: 0x%08X-0x%08X\n",
+      (uint32_t)(memBase) << 20,
+      (uint32_t)(memLimit) << 20
+    );
+
+    uint8_t ioLimit = 0, ioBase = 0;
+    uint16_t ioLimitUpper = 0, ioBaseUpper = 0;
+    pci_read_config_byte(bus, slot, func, PCI_IO_BASE, &ioBase);
+    pci_read_config_byte(bus, slot, func, PCI_IO_LIMIT, &ioLimit);
+    pci_read_config_word(bus, slot, func, PCI_IO_BASE_UPPER16, &ioBaseUpper);
+    pci_read_config_word(bus, slot, func, PCI_IO_LIMIT_UPPER16, &ioLimitUpper);
+
+    switch (ioLimit & 0xF) {
+    case 0: /* ISA compat, 16-bit addressing */
+      printf(
+        "  I/O Behind Bridge: 0x%04X-0x%04X (16-bit, ISA compatibility)\n",
+        (uint32_t)(ioBase & 0xF) << 12,
+        (uint32_t)(ioLimit & 0xF) << 12
+      );
+      break;
+    case 1: /* 32-bit addressing */
+      printf(
+        "  I/O Behind Bridge: 0x%08X-0x%08X (32-bit)\n",
+        (uint32_t)(ioBaseUpper) << 16 | (uint32_t)(ioBase & 0xF) << 12,
+        (uint32_t)(ioLimitUpper) << 16 | (uint32_t)(ioLimit & 0xF) << 12
+      );
+      break;
+    default:
+      printf("  I/O Behind Bridge: Invalid?\n");
+      /* ??? */
+    }
+
+    uint16_t prefLimit = 0, prefBase = 0;
+    uint32_t prefBaseUpper, prefLimitUpper;
+    pci_read_config_word(bus, slot, func, PCI_PREF_MEMORY_BASE, &prefBase);
+    pci_read_config_word(bus, slot, func, PCI_PREF_MEMORY_LIMIT, &prefLimit);
+    pci_read_config_dword(bus, slot, func, PCI_PREF_BASE_UPPER32, &prefBaseUpper);
+    pci_read_config_dword(bus, slot, func, PCI_PREF_LIMIT_UPPER32, &prefLimitUpper);
+
+    printf(
+      "  Prefetchable Memory Behind Bridge: 0x%08X-0x%08X\n",
+      (uint32_t)(prefBase) << 20,
+      (uint32_t)(prefLimit) << 20
+    );
+  }
+  
+  puts("\n");
+  
+  return 0;
+}
+
+int lspci_adv()
+{
+  const uint8_t busses = pci_bus_count();
+  if (busses == 0) {
+    printf("No PCI busses on this system\n");
+    return -1;
+  }
+  
+  for (int bus = 0; bus < busses; ++bus) {
+    for (int slot = 0; slot < PCI_MAX_DEVICES; ++slot) {
+      for (int func = 0; func < PCI_MAX_FUNCTIONS; ++func) {
+        uint16_t vendor, device;
+        if (pci_read_config_word(bus, slot, func, PCI_VENDOR_ID, &vendor) != 0)
+          continue;
+        if (pci_read_config_word(bus, slot, func, PCI_DEVICE_ID, &device) != 0)
+          continue;
+        if (vendor == 0xFFFF && device == 0xFFFF)
+          continue;
+        print_pci_dev(bus, slot, func, vendor, device);
+      }
+    }
+  }
   return 0;
 }
 
@@ -492,16 +786,33 @@ CEXP_HELP_TAB_BEGIN(lspci)
 	),
 CEXP_HELP_TAB_END
 
+CEXP_HELP_TAB_BEGIN(lspci_adv)
+	HELP(
+    "List all PCI devices in detail\n",
+	  int, lspci_adv,  (void)
+	),
+CEXP_HELP_TAB_END
+
 #endif // HAVE_PCI
 
 static int
 shell_pci_probe(int argc, char** argv)
 {
 #ifdef HAVE_PCI
-  return lspci();
+  bool advanced = false;
+  for (int i = 1; i < argc; ++i) {
+    if (!strcmp(argv[i], "-v"))
+      advanced = true;
+    else {
+      printf("Unknown arg %s\n", argv[i]);
+      return -1;
+    }
+  }
+  return advanced ? lspci_adv() : lspci();
 #else
   printf("PCI not supported by this BSP\n");
   return -1;
 #endif
 }
+
 
