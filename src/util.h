@@ -119,6 +119,19 @@ extern int ismounted(const char* mntpt);
  */
 extern const char* bsp_get_name();
 
+struct termios;
+
+/**
+ * \brief Configure the file descriptor for immediate input
+ * \returns Previous termios
+ */
+extern int ios_immediate_input(int fd, struct termios* ptr);
+
+/**
+ * \brief Restore previous ios configuration
+ */
+extern void ios_restore(int fd, const struct termios* ptr);
+
 enum script_type {
   SCRIPT_UNKNOWN = -1,
   SCRIPT_CEXPSH,

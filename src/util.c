@@ -15,6 +15,7 @@
  **/
 #include <rtems.h>
 #include <rtems/bspcmdline.h>
+#include <bsp.h>
 
 #include <sys/errno.h>
 #include <pthread.h>
@@ -23,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <termios.h>
 
 #include "rtems-init.h"
 #include "util.h"
@@ -386,10 +388,42 @@ bsp_get_name()
 #elif defined(BSP_mvme3100)
   return "mvme3100";
 #elif defined(BSP_pc686)
-  return "rtems-pc686";
+  return "pc686";
 #elif defined(BSP_uC5282)
   return "uC5282";
 #else
   #error "Please add an entry to bsp_get_name"
 #endif
+}
+
+int
+ios_immediate_input(int fd, struct termios* ptr)
+{
+  struct termios r = {0};
+  int c = 0;
+  if ((c = tcgetattr(fd, &r)) < 0)
+    return c;
+  
+  struct termios new = r;
+  new.c_lflag &= ~ICANON;
+  /* configure for effectively nonblock IO */
+  new.c_cc[VMIN] = 0;  /* min chars to 0 */
+  new.c_cc[VTIME] = 0; /* timeout to 0 */
+
+  if ((c = tcsetattr(fd, TCSANOW, &new)) < 0)
+    return c;
+
+  *ptr = r;
+  return 0;
+}
+
+void
+ios_restore(int fd, const struct termios* ptr)
+{
+  if (!ptr)
+    return;
+  
+  int r = tcsetattr(fd, TCSANOW, ptr);
+  if (r < 0)
+    perror("tcsetattr");
 }
