@@ -452,7 +452,7 @@ shell_getifaddrs(int argc, char** argv)
   return 0;
 }
 
-#ifdef HAVE_PCI
+#if HAVE_PCI
 int
 lspci()
 {
@@ -798,7 +798,7 @@ CEXP_HELP_TAB_END
 static int
 shell_pci_probe(int argc, char** argv)
 {
-#ifdef HAVE_PCI
+#if HAVE_PCI
   bool advanced = false;
   for (int i = 1; i < argc; ++i) {
     if (!strcmp(argv[i], "-v"))
