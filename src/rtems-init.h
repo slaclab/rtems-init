@@ -19,23 +19,6 @@
 
 #include "rtems-init-config.h"
 
-#if defined(BSP_beatnik) || defined(BSP_mvme3100)
-# define HAVE_MOTLOAD
-# define RTEMS_NETWORK_CONFIG_MBUF_SPACE 2048
-# define RTEMS_NETWORK_CONFIG_CLUSTER_SPACE 5120
-# define HAVE_NVRAM
-# define HAVE_MOTLOAD
-#elif defined(__i386__)
-# define RTEMS_NETWORK_CONFIG_MBUF_SPACE 2048
-# define RTEMS_NETWORK_CONFIG_CLUSTER_SPACE 5120
-#elif defined(BSP_uC5282)
-# define RTEMS_NETWORK_CONFIG_MBUF_SPACE 200
-# define RTEMS_NETWORK_CONFIG_CLUSTER_SPACE 350
-# define HAVE_NVRAM
-#else
-# error Set RTEMS_NETWORK_CONFIG_MBUF_SPACE and RTEMS_NETWORK_CONFIG_CLUSTER_SPACE for your BSP!
-#endif
-
 /* Common typedefs */
 typedef unsigned long long ulonglong_t;
 typedef long long longlong_t;
