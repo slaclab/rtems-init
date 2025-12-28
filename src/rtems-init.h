@@ -17,6 +17,8 @@
 
 #include <rtems/shell.h>
 
+#include "rtems-init-config.h"
+
 #if defined(BSP_beatnik) || defined(BSP_mvme3100)
 # define HAVE_MOTLOAD
 # define RTEMS_NETWORK_CONFIG_MBUF_SPACE 2048
