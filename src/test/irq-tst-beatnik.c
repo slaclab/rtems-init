@@ -2,7 +2,7 @@
  * ----------------------------------------------------------------------------
  * Company    : SLAC National Accelerator Laboratory
  * ----------------------------------------------------------------------------
- * Description: IRQ testing code
+ * Description: IRQ test for beatnik BSP
  * ----------------------------------------------------------------------------
  * This file is part of 'rtems-init'. It is subject to the license terms in the
  * LICENSE.txt file found in the top-level directory of this distribution,
@@ -21,40 +21,31 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#ifdef BSP_beatnik
 #define RTC_IRQ (BSP_IRQ_GPP_0 + 3)
 #define WDNMI_IRQ (BSP_IRQ_GPP_0 + 6)
 #define TEST_IRQ RTC_IRQ
-#endif
 
 static int s_counter = 0;
 
-#ifdef BSP_beatnik
 #define RTC_BASE_ADDR 0xF1110000
 static struct rtc_save {
   uint8_t data[4];
 } rtc_save;
-#endif
 
 static void
 dummy_irq()
 {
-#ifdef TEST_IRQ
   if (++s_counter == 5)
     BSP_disable_irq_at_pic(TEST_IRQ);
-#endif
 
-#ifdef BSP_beatnik
   /* Read the FLAGS register to clear the interrupt */
   uint8_t fl = *(volatile uint8_t*)(RTC_BASE_ADDR + 0x7FF0);
-#endif
 }
 
 /* Configure RTC settings for the test */
 static void
 config_rtc()
 {
-#ifdef BSP_beatnik
   /* Set AFE */
   uint8_t* addr = (uint8_t*)(RTC_BASE_ADDR + 0x7FF6);
   *addr |= 0x80;
@@ -64,21 +55,18 @@ config_rtc()
     rtc_save.data[i] = *addr;
     *addr |= 0x80;
   }
-#endif
 }
 
 /* Restore RTC settings to their previous values */
 static void
 restore_rtc()
 {
-#ifdef BSP_beatnik
   /* Clear AFE */
   uint8_t* addr = (uint8_t*)(RTC_BASE_ADDR + 0x7FF6);
   *addr &= ~0x80;
   addr = (uint8_t*)(RTC_BASE_ADDR + 0x7FF2);
   for (int i = 0; i < 4; ++i, ++addr)
     *addr = rtc_save.data[i];
-#endif
 }
 
 /* Legacy style IRQ test.
@@ -87,7 +75,6 @@ restore_rtc()
 int
 legacy_irq_tst()
 {
-#ifdef BSP_beatnik
   int ret = 0;
   s_counter = 0;
 
@@ -124,32 +111,23 @@ legacy_irq_tst()
   }
 
   return ret;
-#else
-  printf("legacy_irq_test not implemented for this platform\n");
-  return 1;
-#endif
 }
 
 /* New IRQ */
 static void
 new_irq(void* arg)
 {
-#ifdef TEST_IRQ
   if (++s_counter == 5)
     rtems_interrupt_vector_disable(TEST_IRQ);
-#endif
 
-#ifdef BSP_beatnik
   /* Read the FLAGS register to clear the interrupt */
   uint8_t fl = *(volatile uint8_t*)(RTC_BASE_ADDR + 0x7FF0);
-#endif
 }
 
 /* New style IRQ test using the rtems_interrupt API */
 int
 irq_tst()
 {
-#ifdef BSP_beatnik
   int ret = 0, r = 0;
   s_counter = 0;
   
@@ -189,8 +167,4 @@ irq_tst()
   }
 
   return ret;
-#else
-  printf("irq_tst not implemented for this platform\n");
-  return 1;
-#endif
 }

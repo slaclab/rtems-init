@@ -59,7 +59,7 @@ set(RTEMS_INIT_SRCS
     src/cexp-text-region.c
 
     # Tests
-    src/test/irq-tst.c
+    src/test/tests.c
     src/test/nfs-perf.c
 
     # Lua
