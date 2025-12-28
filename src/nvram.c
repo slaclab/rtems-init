@@ -204,11 +204,11 @@ int
 boot_param_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
 {
 #ifdef BSP_uC5282
-const char* s;
-for (int i = 0; i < sizeof(bootp_params) / sizeof(bootp_params[0]); ++i)
-  if (bootp_params[i] && (s = bsp_getbenv(bootp_params[i])))
-    parsed(bootp_params[i], strlen(bootp_params[i]), s, strlen(s));
-return 0;
+  const char* s;
+  for (int i = 0; i < sizeof(bootp_params) / sizeof(bootp_params[0]); ++i)
+    if (bootp_params[i] && (s = bsp_getbenv(bootp_params[i])))
+      parsed(bootp_params[i], strlen(bootp_params[i]), s, strlen(s));
+  return 0;
 #elif defined(BSP_NVRAM_BOOTPARMS_START)
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
   const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;

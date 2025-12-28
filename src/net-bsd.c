@@ -22,6 +22,8 @@
 #include <machine/rtems-bsd-commands.h>
 #include <rtems/ntpd.h>
 #include <syslog.h>
+#include <bsp/irq.h>
+#include <bsp.h>
 
 #include <assert.h>
 #include <stdint.h>
@@ -292,7 +294,7 @@ network_init()
   klog("Starting BSD networking stack\n");
 
   // From EPICS base:
-#if defined(__i386__)
+#if defined(LIBBSP_I386_PC386_BSP_H)
   // glorious hack to stub out useless EEPROM check
   // which takes sooooo longggg w/ QEMU
   // Writes a 'ret' instruction to immediatly return to the caller
@@ -314,13 +316,27 @@ network_init()
     abort();
     return;
   }
-  
-  if (!bsp_cmdline_has_param("--nodhcp"))
+
+  bool skip_dhcp = bsp_cmdline_has_param("--nodhcp");
+
+  /* Check if BSP skips DHCP altogether */
+#ifdef RTI_CONFIG_SKIP_DHCP
+  skip_dhcp = true;
+#endif
+
+  /* temp hack for mvme5500 */
+#ifdef BSP_beatnik
+  skip_dhcp |= (BSP_getBoardType() == MVME5500);
+#endif
+
+  if (!skip_dhcp) {
     do_dhcp();
+  }
   else {
     klog("Skipping dhcp per request\n");
 
-    /** QEMU specific configuration */
+#ifdef LIBBSP_I386_PC386_BSP_H
+    /** QEMU specific configuration for e1000 */
     char* ifcmd[] = {
       "ifconfig",
       "em0",
@@ -335,6 +351,7 @@ network_init()
           != EXIT_SUCCESS) {
       kerror("network_init: rtems_bsd_command_ifconfig failed\n");
     }
+#endif
   }
   
   /** Display current configuration */
