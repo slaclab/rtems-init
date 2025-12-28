@@ -22,3 +22,9 @@ install-sh
 makefile.top.am
 makefile.top.in
 missing
+
+# Docs
+docs/build/
+
+# IDE stuff
+/.vscode/
