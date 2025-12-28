@@ -40,6 +40,9 @@ typedef enum {
  * to Cexpsh */
 #define RTI_CONFIG_LOGIN_SHELL RTI_SH_CEXP
 
+/* Run tests after initialization is complete. Handy for quick debugging */
+#undef RTI_CONFIG_TESTS_ON_BOOT
+
 /*--------------------- BSP specific configuration below --------------------*/
 
 #ifdef LIBBSP_POWERPC_MVME3100_BSP_H      /* MVME-3100 (PowerPC e500) */

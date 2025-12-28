@@ -36,6 +36,12 @@
 # error Set RTEMS_NETWORK_CONFIG_MBUF_SPACE and RTEMS_NETWORK_CONFIG_CLUSTER_SPACE for your BSP!
 #endif
 
+/* Common typedefs */
+typedef unsigned long long ulonglong_t;
+typedef long long longlong_t;
+typedef unsigned long ulong_t;
+typedef long long_t;
+
 struct dhcp_runtime_cfg
 {
   char cmdline[1024];

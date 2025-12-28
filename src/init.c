@@ -25,6 +25,10 @@
 #include <rtems/rtems-fdt.h>
 #include <bsp/fdt.h>
 
+#if HAVE_PCI
+#include <bsp/pci.h>
+#endif
+
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -33,6 +37,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <dirent.h>
+
+#include "config.h"
+#include "rtems-init-config.h"
 
 #ifdef HAVE_LUA
 #include "lua.h"
@@ -46,6 +53,8 @@
 #include "rtems-init.h"
 #include "getopt_s.h"
 #include "util.h"
+
+extern void run_tests();
 
 static const char* BANNER =
 "\e[31m  ____  _           _      _____      _____   _______  _____  __     __   ____ \e[0m\n"
@@ -77,6 +86,7 @@ serial_init()
   
   tio.c_iflag &= (IXOFF|IXON|IXANY|IGNBRK);
   tio.c_iflag |= BRKINT;
+  tio.c_lflag |= ISIG;
   if (tcsetattr(fileno(stdin), TCSANOW, &tio) < 0) {
     kerror("tcsetattr: %s\n", strerror(errno));
   }
@@ -318,7 +328,7 @@ imfs_init()
  * Initialize RTEMS shell
  */
 void
-shell_init()
+shell_init(bool early)
 {
   klog("Starting interactive shell\n");
 
@@ -330,36 +340,87 @@ shell_init()
     strcpy(rtems_shell_get_current_env()->cwd, nd + sizeof("--cwd"));
   }
 
+  /* register all shell commands */
   for (int i = 0;;++i) {
     struct shell_cmd cmd = shell_cmds[i];
     if (!cmd.cmd) break;
     rtems_shell_add_cmd(cmd.cmd, cmd.topic, cmd.usage, cmd.command);
   }
 
+  rti_shell_type_t which = RTI_CONFIG_LOGIN_SHELL;
+
+  /* temp hack for mvme5500 */
+#ifdef BSP_beatnik
+  if (BSP_getBoardType() == MVME5500)
+    which = RTI_SH_RTSH;
+#endif
+
+  /* early shell will always use rtems shell */
+  if (early)
+    which = RTI_SH_RTSH;
+
+  if (which == RTI_SH_CEXP) {
 #ifdef HAVE_CEXP
-  /* Set prompt to correspond to IOC name */
-  char prompt[128];
-  const char* name = getenv("BSP_MYNM");
-  snprintf(prompt, sizeof(prompt), "%s>", name ? name : bsp_get_name());
-  cexpSetPrompt(CEXP_PROMPT_GBL, prompt);
+    /* Set prompt to correspond to IOC name */
+    char prompt[128];
+    const char* name = getenv("BSP_MYNM");
+    snprintf(prompt, sizeof(prompt), "%s>", name ? name : bsp_get_name());
+    cexpSetPrompt(CEXP_PROMPT_GBL, prompt);
 
-  /* start interactive shell */
-  while (1) {
-    cexpsh(NULL);
+    /* start interactive shell */
+    while (1) {
+      cexpsh(NULL);
+    }
+#endif
   }
-#else
+  else if (RTI_SH_RTSH) {
+    rtems_status_code r;
+    r = rtems_shell_init(
+      "SHLL", 0, 100, "/dev/console", true, early, NULL
+    );
 
-  rtems_status_code r;
-  r = rtems_shell_init(
-    "SHLL", 0, 100, "/dev/console", true, false, NULL
-  );
+    if (r != RTEMS_SUCCESSFUL)
+      kerror("Unable to init RTEMS shell\n");
 
-  if (r != RTEMS_SUCCESSFUL)
-    kerror("Unable to init RTEMS shell\n");
+    klog("Finished interactive shell init\n");
 
-  klog("Finished interactive shell init\n");
+    rtems_termios_register_isig_handler(rtems_termios_posix_isig_handler);
+  }
+}
 
-  rtems_termios_register_isig_handler(rtems_termios_posix_isig_handler);
+void
+earlyshell_prompt()
+{
+#if RTI_CONFIG_EARLYSHELL_TIMEOUT != 0
+  /* Setup input to get keypresses immediately */
+  struct termios old;
+  if (ios_immediate_input(STDIN_FILENO, &old) < 0) {
+    perror("ios_immediate_input");
+    return;
+  }
+
+  ssize_t timeo = RTI_CONFIG_EARLYSHELL_TIMEOUT * 10;
+  int c;
+  while ((c = getchar()) <= 0 && timeo > 0) {
+    usleep(100000);
+    if ((timeo % 10) == 0) {
+      printk(
+        "Press any key to skip initialization: %lld    \r",
+        (longlong_t)timeo / 10
+      );
+    }
+    timeo--;
+  }
+  printk("\n");
+
+  ios_restore(STDIN_FILENO, &old);
+
+  if (c < 0 || timeo <= 0)
+    return;
+
+  printk("Starting early debug shell\n");
+  printk("On exit, the system will continue with initialization\n");
+  shell_init(true);
 #endif
 }
 
@@ -407,6 +468,10 @@ rc_init()
 static int
 initd_dirent_filter(const struct dirent* de)
 {
+  if (!S_ISREG(de->d_type))
+    return 0;
+  if (script_get_type(de->d_name) == SCRIPT_UNKNOWN)
+    return 0;
   return 1;
 }
 
@@ -529,11 +594,16 @@ POSIX_Init(void *argument)
   /* Unpack the rootfs */
   imfs_init();
 
+  /* Prompt for debug shell */
+  earlyshell_prompt();
+
   /* Run /etc/rc.lua/cmd */
   rc_init();
-
+  
+#ifndef RTI_CONFIG_SKIP_NETWORK
   /* Setup network, dispatch dhcp */
   network_init();
+#endif
 
   /* setup PATH */
   path_init();
@@ -547,8 +617,12 @@ POSIX_Init(void *argument)
   /* Execute the startup script given by dhcp */
   st_init();
 
+#ifdef RTI_CONFIG_TESTS_ON_BOOT
+  run_tests();
+#endif
+  
   /* Start interactive shell */
-  shell_init();
+  shell_init(false);
   return 0;
 }
 
