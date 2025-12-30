@@ -413,7 +413,8 @@ ios_immediate_input(int fd, struct termios* ptr)
   if ((c = tcsetattr(fd, TCSANOW, &new)) < 0)
     return c;
 
-  *ptr = r;
+  if (ptr)
+    *ptr = r;
   return 0;
 }
 
@@ -426,4 +427,29 @@ ios_restore(int fd, const struct termios* ptr)
   int r = tcsetattr(fd, TCSANOW, ptr);
   if (r < 0)
     perror("tcsetattr");
+}
+
+int
+ios_shell_input(int fd, struct termios* ptr)
+{
+  int r;
+
+  struct termios tio;
+  if ((r = tcgetattr(fd, &tio)) < 0) {
+    kerror("tcgetattr: %s\n", strerror(errno));
+    return r;
+  }
+
+  if (ptr)
+    *ptr = tio;
+
+  tio.c_iflag &= (IXOFF|IXON|IXANY|IGNBRK);
+  tio.c_iflag |= BRKINT;
+  tio.c_lflag |= ISIG;
+  if (tcsetattr(fd, TCSANOW, &tio) < 0) {
+    kerror("tcsetattr: %s\n", strerror(errno));
+    return -1;
+  }
+
+  return 0;
 }

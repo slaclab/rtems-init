@@ -79,18 +79,8 @@ char startup_script[PATH_MAX];
 void
 serial_init()
 {
-  struct termios tio;
-  if (tcgetattr(fileno(stdin), &tio) < 0) {
-    kerror("tcgetattr: %s\n", strerror(errno));
-  }
-  
-  tio.c_iflag &= (IXOFF|IXON|IXANY|IGNBRK);
-  tio.c_iflag |= BRKINT;
-  tio.c_lflag |= ISIG | ECHO;
-  if (tcsetattr(fileno(stdin), TCSANOW, &tio) < 0) {
-    kerror("tcsetattr: %s\n", strerror(errno));
-  }
-  
+  ios_shell_input(fileno(stdin), NULL);
+
   /** Display our really cool banner */
   puts(BANNER);
 

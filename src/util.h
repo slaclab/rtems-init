@@ -132,6 +132,11 @@ extern int ios_immediate_input(int fd, struct termios* ptr);
  */
 extern void ios_restore(int fd, const struct termios* ptr);
 
+/**
+ * \brief Configure ios for shell input
+ */
+extern int ios_shell_input(int fd, struct termios* ptr);
+
 enum script_type {
   SCRIPT_UNKNOWN = -1,
   SCRIPT_CEXPSH,

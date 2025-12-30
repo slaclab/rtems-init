@@ -71,6 +71,7 @@ static int shell_test(int argc, char** argv);
 static int shell_sysReset(int argc, char** argv);
 static int shell_getifaddrs(int argc, char** argv);
 static int shell_pci_probe(int argc, char** argv);
+static int shell_rtems_sh(int argc, char** argv);
 
 extern int shell_lua_main(int argc, char** argv);
 
@@ -115,11 +116,36 @@ struct shell_cmd shell_cmds[] =
   { "test",       "misc",   "",                   shell_test },
   { "getifaddrs", "net",    "",                   shell_getifaddrs },
   { "lspci",      "misc",   "",                   shell_pci_probe },
+  { "sh",         "misc",   "",                   shell_rtems_sh },
 #ifdef HAVE_LUA
   { "lua",        "misc",   LUA_USAGE,            shell_lua_main },
 #endif
   { NULL,         NULL,     NULL,                 NULL },
 };
+
+int
+rtems_sh()
+{
+  rtems_shell_env_t e;
+  rtems_shell_dup_current_env(&e);
+
+  return rtems_shell_run_main_loop(&e, true, NULL) ? 0 : 1;
+}
+
+#ifdef HAVE_CEXP
+CEXP_HELP_TAB_BEGIN(rtems_sh)
+	HELP(
+    "Spin up an instance of the RTEMS shell\n",
+	  int, rtems_sh,  (void)
+	),
+CEXP_HELP_TAB_END
+#endif
+
+static int
+shell_rtems_sh(int argc, char** argv)
+{
+  return rtems_sh();
+}
 
 static int
 shell_debugger_start(int argc, char** argv)

@@ -51,6 +51,15 @@ telnetd_init_command(char* dev, void* cfg)
 {
   rtems_shell_env_t se;
 
+  int fd = fileno(stdin);
+  ios_shell_input(fd, NULL);
+
+  struct termios tio;
+  if (tcgetattr(fd, &tio) >= 0) {
+    tio.c_lflag |= ECHO;
+    tcsetattr(fd, TCSANOW, &tio);
+  }
+
   #if RTI_CONFIG_LOGIN_SHELL == RTI_SH_RTSH
   {
     rtems_shell_dup_current_env(&se);

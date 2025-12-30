@@ -126,7 +126,7 @@ new_irq(void* arg)
 
 /* New style IRQ test using the rtems_interrupt API */
 int
-irq_tst()
+irq_test()
 {
   int ret = 0, r = 0;
   s_counter = 0;
@@ -168,3 +168,10 @@ irq_tst()
 
   return ret;
 }
+
+int
+legacy_irq_test()
+{
+  return 1;
+}
+
