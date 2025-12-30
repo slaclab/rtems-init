@@ -18,6 +18,7 @@
 #include <rtems/rtems_bsdnet.h>
 #include <rtems/pci.h>
 #include <rtems/error.h>
+#include <rtems/telnetd.h>
 
 #include <stdint.h>
 #include <stdio.h>
@@ -108,8 +109,14 @@ network_init()
 
   klog("Starting ntpd\n");
 
-  if (ntp_init() != 0)
+  if (ntp_init() != 0) {
     kerror("NTP init failed; it will now be disabled\n");
+  }
+
+  klog("Starting telnetd\n");
+  if (rtems_telnetd_initialize() != RTEMS_SUCCESSFUL) {
+    kerror("Failed to init telnetd\n");
+  }
 
   klog("End legacy network init\n");
 }

@@ -17,10 +17,8 @@
 
 #include <bsp.h>
 
-typedef enum {
-  RTI_SH_RTSH,    /* RTEMS shell */
-  RTI_SH_CEXP,    /* Cexpsh */
-} rti_shell_type_t;
+#define RTI_SH_RTSH 0    /* RTEMS shell */
+#define RTI_SH_CEXP 1    /* Cexpsh */
 
 /* Amount of time the early-shell abort prompt will show for.
  * This shows on every boot to prompt the user to enter an early debug shell,

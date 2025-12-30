@@ -86,7 +86,7 @@ serial_init()
   
   tio.c_iflag &= (IXOFF|IXON|IXANY|IGNBRK);
   tio.c_iflag |= BRKINT;
-  tio.c_lflag |= ISIG;
+  tio.c_lflag |= ISIG | ECHO;
   if (tcsetattr(fileno(stdin), TCSANOW, &tio) < 0) {
     kerror("tcsetattr: %s\n", strerror(errno));
   }
@@ -347,7 +347,7 @@ shell_init(bool early)
     rtems_shell_add_cmd(cmd.cmd, cmd.topic, cmd.usage, cmd.command);
   }
 
-  rti_shell_type_t which = RTI_CONFIG_LOGIN_SHELL;
+  int which = RTI_CONFIG_LOGIN_SHELL;
 
   /* temp hack for mvme5500 */
 #ifdef BSP_beatnik
