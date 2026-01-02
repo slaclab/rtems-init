@@ -29,6 +29,8 @@
 #include "rtems-init.h"
 #include "util.h"
 
+#define KLOG_STREAM stdout
+
 struct _event_s
 {
   pthread_cond_t cond;
@@ -259,12 +261,12 @@ kvlog(enum klog_color c, const char* fmt, va_list va)
   default:
     break;
   }
-  
-  fprintf(stderr, ANSI_GREEN "[%5lld.%06ld] " ANSI_RESET,
+
+  fprintf(KLOG_STREAM, ANSI_GREEN "[%5lld.%06ld] " ANSI_RESET,
     tp.tv_sec, tp.tv_nsec / 1000);
   if (nc)
-    fprintf(stderr, "%s", nc);
-  return vfprintf(stderr, fmt, va);
+    fprintf(KLOG_STREAM, "%s", nc);
+  return vfprintf(KLOG_STREAM, fmt, va);
 }
 
 int
@@ -293,10 +295,10 @@ kvwarn(const char* fmt, va_list va)
   struct timespec tp;
   clock_gettime(CLOCK_MONOTONIC, &tp);
 
-  fprintf(stderr, ANSI_GREEN "[%5lld.%06ld] " ANSI_YELLOW,
+  fprintf(KLOG_STREAM, ANSI_GREEN "[%5lld.%06ld] " ANSI_YELLOW,
     tp.tv_sec, tp.tv_nsec / 1000);
-  int r = vfprintf(stderr, fmt, va);
-  fputs(ANSI_RESET, stderr);
+  int r = vfprintf(KLOG_STREAM, fmt, va);
+  fputs(ANSI_RESET, KLOG_STREAM);
   return r;
 }
 
@@ -316,10 +318,10 @@ kverror(const char* fmt, va_list va)
   struct timespec tp;
   clock_gettime(CLOCK_MONOTONIC, &tp);
 
-  fprintf(stderr, ANSI_GREEN "[%5lld.%06ld] " ANSI_RED,
+  fprintf(KLOG_STREAM, ANSI_GREEN "[%5lld.%06ld] " ANSI_RED,
     tp.tv_sec, tp.tv_nsec / 1000);
-  int r = vfprintf(stderr, fmt, va);
-  fputs(ANSI_RESET, stderr);
+  int r = vfprintf(KLOG_STREAM, fmt, va);
+  fputs(ANSI_RESET, KLOG_STREAM);
   return r;
 }
 
@@ -330,7 +332,7 @@ kerror(const char* fmt, ...)
   va_start(va, fmt);
   int r = kverror(fmt, va);
   va_end(va);
-  fputs(ANSI_RESET, stderr);
+  fputs(ANSI_RESET, KLOG_STREAM);
   return r;
 }
 
