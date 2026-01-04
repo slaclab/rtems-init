@@ -2,7 +2,8 @@
  * ----------------------------------------------------------------------------
  * Company    : SLAC National Accelerator Laboratory
  * ----------------------------------------------------------------------------
- * Description: Cexpsh text region configuration
+ * Description: Cexpsh text region configuration. Needed for specific PowerPC
+ *              BSPs, unfortunately.
  * ----------------------------------------------------------------------------
  * This file is part of 'rtems-init'. It is subject to the license terms in the
  * LICENSE.txt file found in the top-level directory of this distribution,

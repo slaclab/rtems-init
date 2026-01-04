@@ -49,14 +49,15 @@ include_directories("${CMAKE_BINARY_DIR}")
 set(RTEMS_INIT_SRCS
     src/init.c
     src/rtems-config.c
-    src/util.c
     src/shell.c
-    src/getopt_s.c
     src/nvram.c
     src/hack.c
     src/net.c
     src/rtems-lua.c
     src/cexp-text-region.c
+
+    src/common/getopt_s.c
+    src/common/util.c
 
     # Tests
     src/test/tests.c
@@ -88,6 +89,10 @@ rtems_include_libs(
     TARGET rtems-init
     LIBS c stdc++ m
     LIBDIRS "${CMAKE_BINARY_DIR}"
+)
+
+target_include_directories(
+    rtems-init PUBLIC src
 )
 
 get_target_property(CURRENT_LINK_FLAGS rtems-init LINK_FLAGS)

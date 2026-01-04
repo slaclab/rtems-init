@@ -27,7 +27,7 @@
 #include <ctype.h>
 
 #include "rtems-init.h"
-#include "util.h"
+#include "common/util.h"
 
 #if defined(BSP_beatnik) || defined(BSP_mvme3100)
 #define MOTLOAD_OFFSET 0x7000

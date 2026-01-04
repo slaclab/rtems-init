@@ -53,8 +53,8 @@
 #include <string.h>
 
 #include "rtems-init.h"
-#include "getopt_s.h"
-#include "util.h"
+#include "common/getopt_s.h"
+#include "common/util.h"
 
 #include "config.h"
 

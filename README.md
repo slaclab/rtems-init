@@ -20,7 +20,11 @@ Boot parameters are supplied by two sources: NVRAM and DHCP. Parameters are set 
 
 ## Supported BSPs
 
-Tested on: beatnik (mvme6100), mvme3100, uC5282, pc686-qemu
+The following BSPs have been tested with rtems-init:
+- powerpc/beatnik (MVME6100, MVME5500)
+- powerpc/mvme3100
+- m68k/uC5282
+- i386/pc686 (QEMU)
 
 ## Simulating with QEMU
 
@@ -32,16 +36,18 @@ Run with `./tests/run-qemu-i386.sh`
 
 This requires that you have `qemu-system-i386` installed on your system.
 
-# Components
+## Components
 
-rtems-init (TODO RENAME ME!) is derived from ssrlApps.
+rtems-init is largely a rewrite of ssrlApps and thus uses many of the ssrlApps modules.
 
 Some of the shared components:
-- libBspExt
-  - Extensions to the RTEMS ISR API
-- drvLan9118
+- modules/miscUtils
+  - Implements misc utilities that are useful to RTEMS applications. Includes things like extra commands and tools.
+- modules/bspExt
+  - Extensions to the legacy-style RTEMS ISR API. Retained for compatibility with older RTEMS apps.
+- modules/drvLan9118 (soon)
   - Raw UDP packet driver for the LCLS fast feedback system 
-- cexp
+- modules/cexp
   - C expression shell, legacy component originally built by SLAC for RTEMS to emulate the vxWorks shell.
-- lua
+- modules/lua
   - RTEMS port of Lua, submoduled in.

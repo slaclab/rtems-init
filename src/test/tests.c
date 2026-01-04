@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "../util.h"
+#include "common/util.h"
 
 /* test function prototypes */
 int legacy_irq_test();

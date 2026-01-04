@@ -2,7 +2,7 @@
  * ----------------------------------------------------------------------------
  * Company    : SLAC National Accelerator Laboratory
  * ----------------------------------------------------------------------------
- * Description: Common utilities
+ * Description: Common utilities. These can be used standalone.
  * ----------------------------------------------------------------------------
  * This file is part of 'rtems-init'. It is subject to the license terms in the
  * LICENSE.txt file found in the top-level directory of this distribution,
@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <stdarg.h>
 
 /** ANSI escape codes */
 #define ANSI_RED "\e[31m"
@@ -41,12 +42,14 @@ strncpySafe(char* str, const char* src, size_t len) {
   return str;
 }
 
+/* Quick and dirty min() for integers */
 static inline int
 min(int a, int b)
 {
   return a < b ? a : b;
 }
 
+/* Quick and dirty max() for integers */
 static inline int
 max(int a, int b)
 {
@@ -139,12 +142,16 @@ extern int ios_shell_input(int fd, struct termios* ptr);
 
 enum script_type {
   SCRIPT_UNKNOWN = -1,
-  SCRIPT_CEXPSH,
-  SCRIPT_LUA
+  SCRIPT_CEXPSH,        /* .cmd */
+  SCRIPT_LUA            /* .lua */
 };
 
+/* Returns the script type based on file extension */
 enum script_type script_get_type(const char* path);
 
+/**
+ * \brief Generic thread events API
+ */
 typedef struct _event_s event_t;
 extern event_t* event_create();
 extern int event_wait(event_t* ev, uint64_t timeout_ms);
@@ -153,3 +160,23 @@ extern void event_destroy(event_t* ev);
 
 extern void bsp_cmdline_get_param(const char* param, char* val, size_t vlen);
 extern int bsp_cmdline_has_param(const char* param);
+
+/* Returns 1 if file exists */
+int file_exists(const char* file);
+
+enum klog_color {
+  KLOG_NONE,
+  KLOG_GREEN,
+  KLOG_YELLOW,
+  KLOG_RED,
+  KLOG_BLUE,
+};
+
+/* klog helpers */
+int kvlog(enum klog_color c, const char* fmt, va_list va);
+int kclog(enum klog_color c, const char* fmt, ...) __attribute__((format(printf, 2, 3)));
+int klog(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
+int kvwarn(const char* fmt, va_list va);
+int kwarn(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
+int kverror(const char* fmt, va_list va);
+int kerror(const char* fmt, ...) __attribute__((format(printf, 1, 2)));

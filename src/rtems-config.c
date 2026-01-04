@@ -14,6 +14,7 @@
  * ----------------------------------------------------------------------------
  **/
 #include <rtems.h>
+#include <bsp.h>
 
 #include "rtems-init-config.h"
 
@@ -168,15 +169,13 @@ extern void *POSIX_Init(void *argument);
 #define CONFIGURE_APPLICATION_NEEDS_STUB_DRIVER
 #define CONFIGURE_APPLICATION_NEEDS_ZERO_DRIVER
 
-/** uC5282 has no RTC driver */
-#ifndef BSP_uC5282
+/* uC5282 has no RTC driver */
+#ifndef LIBBSP_M68K_UC5282_BSP_H
 #define CONFIGURE_APPLICATION_NEEDS_RTC_DRIVER
 #endif
 
-#if defined(BSP_pc386) || defined(BSP_pc686)
+#if defined(LIBBSP_I386_PC386_BSP_H)
 #define RTEMS_BSD_CONFIG_DOMAIN_PAGE_MBUFS_SIZE (64 * 1024 * 1024)
-#elif defined(BSP_qoriq_e500)
-#define RTEMS_BSD_CONFIG_DOMAIN_PAGE_MBUFS_SIZE (32 * 1024 * 1024)
 #endif
 
 #define CONFIGURE_INIT

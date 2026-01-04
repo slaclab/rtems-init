@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #include "rtems-init.h"
-#include "util.h"
+#include "common/util.h"
 
 static rtems_id ntp_thread;
 

@@ -18,6 +18,7 @@
 #include <rtems/shell.h>
 
 #include "rtems-init-config.h"
+#include "common/util.h"
 
 /* Common typedefs */
 typedef unsigned long long ulonglong_t;
@@ -123,27 +124,3 @@ extern void network_init();
  ********************************************************/
 
 extern int lua_exec_script(const char* file);
-
-/********************************************************
- * util.c
- ********************************************************/
-
-/* Returns 1 if file exists */
-int file_exists(const char* file);
-
-enum klog_color {
-  KLOG_NONE,
-  KLOG_GREEN,
-  KLOG_YELLOW,
-  KLOG_RED,
-  KLOG_BLUE,
-};
-
-/* klog helpers */
-int kvlog(enum klog_color c, const char* fmt, va_list va);
-int kclog(enum klog_color c, const char* fmt, ...) __attribute__((format(printf, 2, 3)));
-int klog(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
-int kvwarn(const char* fmt, va_list va);
-int kwarn(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
-int kverror(const char* fmt, va_list va);
-int kerror(const char* fmt, ...) __attribute__((format(printf, 1, 2)));

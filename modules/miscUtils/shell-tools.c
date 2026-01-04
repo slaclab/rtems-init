@@ -24,6 +24,8 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #ifdef HAVE_CEXP
 #include <cexpHelp.h>

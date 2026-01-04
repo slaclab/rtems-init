@@ -33,7 +33,7 @@
 #include <cexp.h>
 
 #include "rtems-init.h"
-#include "util.h"
+#include "common/util.h"
 
 /****************************************************************************\
  * DHCP configuration

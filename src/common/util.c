@@ -2,7 +2,7 @@
  * ----------------------------------------------------------------------------
  * Company    : SLAC National Accelerator Laboratory
  * ----------------------------------------------------------------------------
- * Description: Common utilities
+ * Description: Common utilities. These can be used standalone.
  * ----------------------------------------------------------------------------
  * This file is part of 'rtems-init'. It is subject to the license terms in the
  * LICENSE.txt file found in the top-level directory of this distribution,
@@ -26,7 +26,6 @@
 #include <stdarg.h>
 #include <termios.h>
 
-#include "rtems-init.h"
 #include "util.h"
 
 #define KLOG_STREAM stdout
