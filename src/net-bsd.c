@@ -275,7 +275,7 @@ network_init()
   }
 
   rtems_bsd_setlogpriority("debug");
-  rtems_bsd_set_vprintf_handler(bsd_vprintf_logger);
+  //rtems_bsd_set_vprintf_handler(bsd_vprintf_logger);
 
   if (rtems_bsd_ifconfig_lo0() != 0) {
     kerror("network_init: rtems_bsd_ifconfig_lo0 failed\n");

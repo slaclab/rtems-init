@@ -48,9 +48,6 @@
 # define HAVE_NVRAM
 # define HAVE_MOTLOAD
 
-# undef  RTI_CONFIG_LOGIN_SHELL
-# define RTI_CONFIG_LOGIN_SHELL RTI_SH_RTSH
-
 #undef RTI_CONFIG_EARLYSHELL_TIMEOUT
 
 #elif defined(LIBBSP_BEATNIK_BSP_H)       /* MVME-6100/MVME-5500 (PPC G4) */
@@ -60,7 +57,7 @@
 
 #elif defined(LIBBSP_I386_PC386_BSP_H)    /* Any x86 (usually QEMU) */
 
-/* Nothing to do */
+#define RTI_CONFIG_LOGIN_SHELL RTI_SH_RTSH
 
 #elif defined(LIBBSP_M68K_UC5282_BSP_H)   /* uC5282 (Coldfire v2, m68k) */
 

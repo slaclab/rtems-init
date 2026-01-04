@@ -363,7 +363,7 @@ shell_init(bool early)
     }
 #endif
   }
-  else if (RTI_SH_RTSH) {
+  else if (which == RTI_SH_RTSH) {
     rtems_status_code r;
     r = rtems_shell_init(
       "SHLL", 0, 100, "/dev/console", true, early, NULL
@@ -445,6 +445,7 @@ rc_init()
   if (file_exists("/etc/rc.cmd")) {
     klog("Running /etc/rc.cmd\n");
     cexpsh("/etc/rc.cmd");
+    puts("");
   }
 #endif
 
@@ -487,6 +488,7 @@ cexpsh_exec_script(const char* script)
 
   klog("Running %s\n", script);
   int r = cexpsh(path);
+  puts("");
 
   chdir(olddir);
   return r;
