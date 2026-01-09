@@ -4,6 +4,8 @@ project(rtems-init ASM C CXX)
 
 option(BUILD_TESTS "Enable to build the tests" ON)
 option(HOST_BUILD "Enable to build for host system" OFF)
+option(BUILD_APPS "Build standalone applications for testing" ON)
+
 set(ENABLE_TEXT_SEGMENT "default" CACHE STRING "Enable the cexpsh text segment. Can be 'default', 'yes' or 'no'" FORCE)
 
 #set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -80,9 +82,9 @@ endif()
 
 set (USE_CEXP 1)
 rtems_add_executable(
-    rtems-init
-
-    ${RTEMS_INIT_SRCS}
+    TARGET rtems-init
+    CEXPSH  # Enable Cexpsh symbol table generation
+    SOURCES ${RTEMS_INIT_SRCS}
 )
 
 rtems_include_libs(
@@ -570,5 +572,12 @@ target_compile_definitions(
 # Host tests
 ###################################################
 if (BUILD_TESTS AND HOST_BUILD)
-    add_executable(misc_test src/test/test.c)
+    add_executable(misc_test src/test/native-test.c)
+endif()
+
+###################################################
+# Standalone apps
+###################################################
+if (BUILD_APPS)
+    add_subdirectory(src/apps)
 endif()

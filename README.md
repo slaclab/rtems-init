@@ -38,15 +38,43 @@ This requires that you have `qemu-system-i386` installed on your system.
 
 ## Components
 
-rtems-init is largely a rewrite of ssrlApps and thus uses many of the ssrlApps modules.
+rtems-init is largely a rewrite of ssrlApps and thus uses many of the ssrlApps modules. Additional test code and standalone apps are also provided.
 
-Some of the shared components:
+File structure:
+- `modules/`
+    - Contains modules rtems-init can use.
+- `rootfs/`
+    - Contains the skeleton rootfs that is built into the image. Includes directories like etc/ for configs.
+- `src/`
+    - Source code for the rtems-init application.
+    - `apps/`
+        - Standalone test applications, usually including BSP-specific test behavior.
+    - `fdt/`
+        - Device tree files.
+    - `common/`
+        - Common code. This can be used in a standalone manner and does not depend on rtems-init.
+    - `test/`
+        - Test code that is integrated directly into rtems-init.
+- `docs/`
+    - Sphinx documentation.
+- `tools/`
+    - rtems-tools submodule. Helper scripts and whatnot.
+
+### Loadable Modules
+
+These modules are loadable separately from the rtems-init application itself. 
+
 - modules/miscUtils
   - Implements misc utilities that are useful to RTEMS applications. Includes things like extra commands and tools.
 - modules/bspExt
   - Extensions to the legacy-style RTEMS ISR API. Retained for compatibility with older RTEMS apps.
 - modules/drvLan9118 (soon)
   - Raw UDP packet driver for the LCLS fast feedback system 
+  
+### Built-in Modules
+
+These components are linked into the rtems-init application itself, and are always available.
+
 - modules/cexp
   - C expression shell, legacy component originally built by SLAC for RTEMS to emulate the vxWorks shell.
 - modules/lua
