@@ -31,6 +31,8 @@ int irq_test();
 # include "irq-tst-beatnik.c"
 #elif defined(LIBBSP_M68K_UC5282_BSP_H)
 # include "irq-tst-uC5282.c"
+#elif defined(LIBBSP_POWERPC_MVME3100_BSP_H)
+# include "irq-tst-mvme3100.c"
 #else
 int legacy_irq_test() { return 1; }
 int irq_test() { return 1; }
