@@ -339,7 +339,7 @@ add_custom_command(
     COMMAND mkdir -p "${CMAKE_BINARY_DIR}/cexp" &&
         bison -v -d -p cexp
         -o "${CMAKE_BINARY_DIR}/cexp/cexp.tab.c"
-        --header="${CMAKE_BINARY_DIR}/cexp/cexp.tab.h"
+        --defines="${CMAKE_BINARY_DIR}/cexp/cexp.tab.h"
         "${SRCDIR}/modules/cexp/cexp.y"
     DEPENDS "${SRCDIR}/modules/cexp/cexp.y"
 )
