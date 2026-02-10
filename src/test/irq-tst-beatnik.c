@@ -33,7 +33,7 @@ static struct rtc_save {
 } rtc_save;
 
 static void
-dummy_irq()
+dummy_irq(void* p)
 {
   if (++s_counter == 5)
     BSP_disable_irq_at_pic(TEST_IRQ);
