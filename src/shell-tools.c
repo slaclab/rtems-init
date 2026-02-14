@@ -260,8 +260,15 @@ nfsMount(const char* ip, const char* src, const char* mntpt)
   return 0;
 }
 
-void
-rtemsEntryPoint()
+/* This symbol will be ref'ed by a linker script. Make sure your shell commands
+ * are added here or they'll be culled! */
+void* _shell_symbol_tbl[] =
 {
-}
-
+  &nfsMount,
+  &pwd,
+  &dumpEnv,
+  &ls,
+  &cp,
+  &cat,
+  &sh
+};

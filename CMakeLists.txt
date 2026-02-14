@@ -550,7 +550,6 @@ endif()
 # miscUtils
 ###################################################
 set(MISCUTILS_SRCS
-    modules/miscUtils/shell-tools.c
     modules/miscUtils/mem-tools.c
 )
 
