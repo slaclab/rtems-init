@@ -1,5 +1,7 @@
 # rtems-init
 
+[doi: 10.11578/dc.20260312.1](https://doi.org/10.11578/dc.20260312.1)
+
 An init system and testing framework for RTEMS applications.
 
 rtems-init performs necessary setup (DHCP, NTP), and provides a framework for system configuration.
@@ -79,3 +81,12 @@ These components are linked into the rtems-init application itself, and are alwa
   - C expression shell, legacy component originally built by SLAC for RTEMS to emulate the vxWorks shell.
 - modules/lua
   - RTEMS port of Lua, submoduled in.
+
+# Copyright Notice
+            
+COPYRIGHT © SLAC National Accelerator Laboratory. All rights reserved. This work is supported [in part] by the U.S. Department of Energy, Office of Basic Energy Sciences under contract DE-AC02-76SF00515.
+
+# Usage Restrictions
+
+Neither the name of the Leland Stanford Junior University, SLAC National Accelerator Laboratory, U.S. Department of Energy nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
