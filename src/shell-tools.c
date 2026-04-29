@@ -15,6 +15,8 @@
  **/
 
 #include <rtems/shell.h>
+#include <rtems/score/protectedheap.h>
+#include <rtems/malloc.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -260,6 +262,48 @@ nfsMount(const char* ip, const char* src, const char* mntpt)
   return 0;
 }
 
+extern Heap_Control _Workspace_Area;
+
+void
+workspaceUsage()
+{
+	Heap_Information_block info;
+	_Protected_heap_Get_information(&_Workspace_Area, &info);
+
+  ssize_t total = info.Free.total + info.Used.total;
+	printf(
+    "Workspace usage: %.2fM (%.2fK) used, %.2fM (%.2fK) free, %.2fM (%.2fK) total\n", 
+    info.Used.total / 1024.*1024., info.Used.total / 1024.,
+		info.Free.total / 1024.*1024., info.Free.total / 1024.,
+    total / 1024.*1024., total / 1024.
+  );
+}
+
+extern Heap_Control* RTEMS_Malloc_Heap;
+
+void
+mallocStats()
+{
+  Heap_Information_block info;
+  if (!_Protected_heap_Get_information(RTEMS_Malloc_Heap, &info)) {
+    printf("_Protected_heap_Get_information failed\n");
+    return;
+  }
+
+  printf("Malloc Stats:\n");
+  printf(" used:          %.2fM (%.2fK)\n", info.Used.total / 1024.*1024., info.Used.total / 1024.);
+  printf(" free:          %.2fM (%.2fK)\n", info.Free.total / 1024.*1024., info.Free.total / 1024.);
+	printf(" allocs:        %llu\n", (unsigned long long)info.Stats.allocs);
+	printf(" frees:         %llu\n", (unsigned long long)info.Stats.frees);
+	printf(" size:          %llu\n", (unsigned long long)info.Stats.size);
+	printf(" free_size:     %llu\n", (unsigned long long)info.Stats.free_size);
+	printf(" failed_allocs: %llu\n", (unsigned long long)info.Stats.failed_allocs);
+	printf(" used_blocks:   %llu\n", (unsigned long long)info.Stats.used_blocks);
+	printf(" free_blocks:   %llu\n", (unsigned long long)info.Stats.free_blocks);
+	printf(" resizes:       %llu\n", (unsigned long long)info.Stats.resizes);
+}
+
+
 /* This symbol will be ref'ed by a linker script. Make sure your shell commands
  * are added here or they'll be culled! */
 void* _shell_symbol_tbl[] =
@@ -270,5 +314,7 @@ void* _shell_symbol_tbl[] =
   &ls,
   &cp,
   &cat,
-  &sh
+  &sh,
+  &workspaceUsage,
+  &mallocStats,
 };
