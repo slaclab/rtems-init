@@ -261,46 +261,48 @@ install(
 ###################################################
 # libtecla
 ###################################################
-set(TECLA_SRCS
-    "modules/cexp/libtecla/chrqueue.c"
-    "modules/cexp/libtecla/cplfile.c"
-    "modules/cexp/libtecla/cplmatch.c"
-    "modules/cexp/libtecla/direader.c"
-    "modules/cexp/libtecla/errmsg.c"
-    "modules/cexp/libtecla/expand.c"
-    "modules/cexp/libtecla/freelist.c"
-    "modules/cexp/libtecla/getline.c"
-    "modules/cexp/libtecla/hash.c"
-    "modules/cexp/libtecla/history.c"
-    "modules/cexp/libtecla/homedir.c"
-    "modules/cexp/libtecla/ioutil.c"
-    "modules/cexp/libtecla/keytab.c"
-    "modules/cexp/libtecla/pathutil.c"
-    "modules/cexp/libtecla/pcache.c"
-    "modules/cexp/libtecla/stringrp.c"
-    "modules/cexp/libtecla/strngmem.c"
-    "modules/cexp/libtecla/version.c"
-)
+if (USE_TECLA)
+    set(TECLA_SRCS
+        "modules/cexp/libtecla/chrqueue.c"
+        "modules/cexp/libtecla/cplfile.c"
+        "modules/cexp/libtecla/cplmatch.c"
+        "modules/cexp/libtecla/direader.c"
+        "modules/cexp/libtecla/errmsg.c"
+        "modules/cexp/libtecla/expand.c"
+        "modules/cexp/libtecla/freelist.c"
+        "modules/cexp/libtecla/getline.c"
+        "modules/cexp/libtecla/hash.c"
+        "modules/cexp/libtecla/history.c"
+        "modules/cexp/libtecla/homedir.c"
+        "modules/cexp/libtecla/ioutil.c"
+        "modules/cexp/libtecla/keytab.c"
+        "modules/cexp/libtecla/pathutil.c"
+        "modules/cexp/libtecla/pcache.c"
+        "modules/cexp/libtecla/stringrp.c"
+        "modules/cexp/libtecla/strngmem.c"
+        "modules/cexp/libtecla/version.c"
+    )
 
-add_library(
-    tecla STATIC ${TECLA_SRCS}
-)
+    add_library(
+        tecla STATIC ${TECLA_SRCS}
+    )
 
-add_library(
-    tecla_r STATIC ${TECLA_SRCS}
-)
+    add_library(
+        tecla_r STATIC ${TECLA_SRCS}
+    )
 
-target_include_directories(
-    tecla PRIVATE cexp
-)
+    target_include_directories(
+        tecla PRIVATE cexp
+    )
 
-target_include_directories(
-    tecla_r PRIVATE cexp
-)
+    target_include_directories(
+        tecla_r PRIVATE cexp
+    )
 
-target_compile_definitions(
-    tecla_r PRIVATE "_POSIX_C_SOURCE=199506L" PREFER_REENTRANT=1
-)
+    target_compile_definitions(
+        tecla_r PRIVATE "_POSIX_C_SOURCE=199506L" PREFER_REENTRANT=1
+    )
+endif()
 
 ###################################################
 # cexpsh
@@ -391,7 +393,7 @@ set(
 # TODO: Make these actually work
 set(USE_PMBFD 1)
 set(ENABLE_LOADER 1)
-set(USE_TECLA 1)
+set(USE_TECLA 0)
 set(USE_BESTLINE 1)
 set(USE_ELFSYMS 0)
 set(USE_RTL 0)
@@ -523,6 +525,11 @@ install(
         "${CMAKE_INSTALL_INCLUDEDIR}"
 )
 
+# Forcing C17 until some issues with generated jumptab.c are fixed.
+set_target_properties(
+    cexp PROPERTIES C_STANDARD 17
+)
+
 ###################################################
 # libbspExt
 ###################################################
@@ -549,23 +556,23 @@ endif()
 ###################################################
 # miscUtils
 ###################################################
-set(MISCUTILS_SRCS
-    modules/miscUtils/mem-tools.c
-)
-
-rtems_add_object(
-    miscUtils rtems-init
-
-    ${MISCUTILS_SRCS}
-)
-
-target_include_directories(
-    miscUtils PRIVATE modules/cexp
-)
-
-target_compile_definitions(
-    miscUtils PRIVATE HAVE_CEXP
-)
+#set(MISCUTILS_SRCS
+#    modules/miscUtils/mem-tools.c
+#)
+#
+#rtems_add_object(
+#    miscUtils rtems-init
+#
+#    ${MISCUTILS_SRCS}
+#)
+#
+#target_include_directories(
+#    miscUtils PRIVATE modules/cexp
+#)
+#
+#target_compile_definitions(
+#    miscUtils PRIVATE HAVE_CEXP
+#)
 
 ###################################################
 # Host tests
