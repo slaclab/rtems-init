@@ -444,11 +444,13 @@ rc_init()
   }
 #endif
 
+#if HAVE_LUA
   /* Exec lua rc script */
   if (file_exists("/etc/rc.lua")) {
     klog("Running /etc/rc.lua\n");
     lua_exec_script("/etc/rc.lua");
   }
+#endif
 }
 
 static int
@@ -521,9 +523,11 @@ initd_init()
     case SCRIPT_CEXPSH:
       r = cexpsh_exec_script(path);
       break;
+  #if HAVE_LUA
     case SCRIPT_LUA:
       r = lua_exec_script(path);
       break;
+  #endif
     default:
       continue;
     }
@@ -550,9 +554,11 @@ st_init()
   }
 
   switch (script_get_type(startup_script)) {
+#if HAVE_LUA
   case SCRIPT_LUA:
     r = lua_exec_script(startup_script);
     break;
+#endif
   default:
     kwarn("Unknown script type for '%s' -- Treating as Cexpsh...\n", startup_script);
   case SCRIPT_CEXPSH:

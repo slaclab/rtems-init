@@ -132,6 +132,7 @@ target_link_libraries(
     
     cexp
     ntp
+    ttcp
     telnetd
     tftpfs
     ${NETWORK_LIB}

@@ -21,6 +21,7 @@
 #include <rtems/ntpd.h>
 #include <bsp.h>
 #include <rtems/libi2c.h>
+#include <ttcp.h>
 
 #ifdef RTEMS_BSD_STACK
 #include <ifaddrs.h>
@@ -118,6 +119,7 @@ struct shell_cmd shell_cmds[] =
   { "getifaddrs", "net",    "",                   shell_getifaddrs },
   { "lspci",      "misc",   "",                   shell_pci_probe },
   { "sh",         "misc",   "",                   shell_rtems_sh },
+  { "ttcp",       "net",    "ttcp test",          rtems_shell_main_ttcp },
 #ifdef HAVE_LUA
   { "lua",        "misc",   LUA_USAGE,            shell_lua_main },
 #endif
