@@ -36,3 +36,4 @@ Contents
    supported-hardware.md
    shell.md
    rootfs.md
+   testing.md
