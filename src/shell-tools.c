@@ -42,7 +42,17 @@
 int
 sh()
 {
-  return rtems_shell_main_loop(rtems_shell_get_current_env());
+  if (!rtems_shell_get_current_env())
+    rtems_shell_init_environment();
+
+  rtems_status_code r = rtems_shell_init(
+    "SHLL", 0, 100, "/dev/console", false, true, NULL
+  );
+  if (r != RTEMS_SUCCESSFUL) {
+    fprintf(stderr, "Failed to start shell\n");
+    return -1;
+  }
+  return 0;
 }
 
 CEXP_HELP_TAB_BEGIN(sh)
@@ -304,8 +314,8 @@ mallocStats()
 }
 
 
-/* This symbol will be ref'ed by a linker script. Make sure your shell commands
- * are added here or they'll be culled! */
+/* This symbol will be EXTERN()'ed by the linker script, and all referenced functions will be
+ * emitted into the final executable. If you're adding a new Cexp-able function, add it here too */
 void* _shell_symbol_tbl[] =
 {
   &nfsMount,
