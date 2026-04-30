@@ -34,3 +34,5 @@ Contents
    :maxdepth: 2
 
    supported-hardware.md
+   shell.md
+   rootfs.md
