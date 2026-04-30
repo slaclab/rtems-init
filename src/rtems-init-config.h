@@ -24,7 +24,7 @@
  * This shows on every boot to prompt the user to enter an early debug shell,
  * before a bulk of system init is done.
  * Set to 0 to skip entirely. */
-#define RTI_CONFIG_EARLYSHELL_TIMEOUT 5
+#define RTI_CONFIG_EARLYSHELL_TIMEOUT 3
 
 /* When set, skip network initialization. Handy for quick debugging on BSPs
  * that don't have a functioning network stack (i.e. in the process of porting
@@ -57,7 +57,7 @@
 
 #elif defined(LIBBSP_I386_PC386_BSP_H)    /* Any x86 (usually QEMU) */
 
-#define RTI_CONFIG_LOGIN_SHELL RTI_SH_RTSH
+#define RTI_CONFIG_LOGIN_SHELL RTI_SH_CEXP
 
 #elif defined(LIBBSP_M68K_UC5282_BSP_H)   /* uC5282 (Coldfire v2, m68k) */
 

@@ -52,6 +52,7 @@ set(RTEMS_INIT_SRCS
     src/init.c
     src/rtems-config.c
     src/shell.c
+    src/shell-tools.c
     src/nvram.c
     src/hack.c
     src/net.c
@@ -103,7 +104,7 @@ get_target_property(CURRENT_LINK_FLAGS rtems-init LINK_FLAGS)
 set_target_properties(
     rtems-init rtems-init-exe PROPERTIES 
         #LINKER_LANGUAGE CXX
-        LINK_FLAGS "-Wl,-u __symbolRefDummy -Wl,--no-undefined"
+        LINK_FLAGS "-Wl,-T${CMAKE_CURRENT_LIST_DIR}/src/linker.ld -Wl,--no-undefined"
 )
 
 rtems_add_rootfs(
