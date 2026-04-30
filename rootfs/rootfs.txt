@@ -11,3 +11,4 @@ etc/libdl.conf                  /        0644
 etc/hosts                       /        0644
 etc/rc.cmd                      /        0777
 etc/init.d/S10modules.cmd       /        0777
+bin/rtems-version.lua           /        0777

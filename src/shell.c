@@ -137,8 +137,6 @@ rtems_cmd_run_lua(int argc, char** argv)
   char abs[PATH_MAX];
   snprintf(abs, sizeof(abs), "/bin/%s", file);
 
-  printf("Starting %s as lua program\n", file);
-
   /* TODO: might need to strdup the args; not sure if lua is doing any
    * modification of these internally. */
   char** newargs = calloc(sizeof(char*), argc+1);
