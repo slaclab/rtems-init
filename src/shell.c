@@ -51,6 +51,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <dirent.h>
 
 #include "rtems-init.h"
 #include "common/getopt_s.h"
@@ -122,6 +123,94 @@ struct shell_cmd shell_cmds[] =
 #endif
   { NULL,         NULL,     NULL,                 NULL },
 };
+
+#if HAVE_LUA
+static int
+rtems_cmd_run_lua(int argc, char** argv)
+{
+  if (argc < 1)
+    return -1;
+  const char* file = argv[0];
+  if (!file)
+    return -1; /* just for safety */
+
+  char abs[PATH_MAX];
+  snprintf(abs, sizeof(abs), "/bin/%s", file);
+
+  printf("Starting %s as lua program\n", file);
+
+  /* TODO: might need to strdup the args; not sure if lua is doing any
+   * modification of these internally. */
+  char** newargs = calloc(sizeof(char*), argc+1);
+  newargs[0] = "lua";
+  newargs[1] = abs;
+  for (int i = 2; i < argc+1; ++i) {
+    newargs[i] = argv[i-1];
+  }
+
+  int r = shell_lua_main(argc+1, newargs);
+
+  free(newargs);
+  return r;
+}
+
+static void
+register_lua_progs()
+{
+  DIR* d = opendir("/bin");
+  if (!d) {
+    return; /* probably doesnt exist */
+  }
+
+  struct dirent* de = NULL;
+  while ((de = readdir(d)) != NULL) {
+    if (strcmp(path_get_extension(de->d_name), "lua")) {
+      continue;
+    }
+
+    char abs[PATH_MAX];
+    snprintf(abs, sizeof(abs), "/bin/%s", de->d_name);
+
+    /* check for valid file */
+    struct stat st;
+    if (stat(abs, &st) < 0)
+      continue;
+
+    /* check for exec bit. since I don't want to bother with proper perm
+     * checking, we'll just require all 3 exec bits */
+    const uint32_t desired = S_IXUSR | S_IXGRP | S_IXOTH;
+    if ((st.st_mode & desired) != desired)
+      continue;
+
+    rtems_shell_add_cmd(
+      de->d_name,
+      "user-programs",
+      "User provided Lua program in /bin",
+      rtems_cmd_run_lua
+    );
+  }
+  closedir(d);
+}
+#endif
+
+/* Register all shell commands.
+ * Also registers Lua programs in the relevant bin/ locations
+ */
+int
+shell_register_cmds()
+{
+  /* register all shell commands */
+  for (int i = 0;;++i) {
+    struct shell_cmd cmd = shell_cmds[i];
+    if (!cmd.cmd) break;
+    rtems_shell_add_cmd(cmd.cmd, cmd.topic, cmd.usage, cmd.command);
+  }
+
+#if HAVE_LUA
+  register_lua_progs();
+#endif
+  return 0;
+}
 
 int
 rtems_sh()

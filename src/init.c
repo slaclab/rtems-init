@@ -330,12 +330,7 @@ shell_init(bool early)
     strcpy(rtems_shell_get_current_env()->cwd, nd + sizeof("--cwd"));
   }
 
-  /* register all shell commands */
-  for (int i = 0;;++i) {
-    struct shell_cmd cmd = shell_cmds[i];
-    if (!cmd.cmd) break;
-    rtems_shell_add_cmd(cmd.cmd, cmd.topic, cmd.usage, cmd.command);
-  }
+  shell_register_cmds();
 
   int which = RTI_CONFIG_LOGIN_SHELL;
 

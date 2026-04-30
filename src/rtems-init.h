@@ -74,6 +74,8 @@ typedef struct shell_cmd
 
 extern struct shell_cmd shell_cmds[];
 
+extern int shell_register_cmds();
+
 /********************************************************
  * rootfs.c (generated)
  ********************************************************/
