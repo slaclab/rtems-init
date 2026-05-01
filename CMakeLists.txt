@@ -18,6 +18,8 @@ endif()
 
 find_package(PkgConfig)
 
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/${RTEMS_ARCH}-${RTEMS_BSP}.cmake" OPTIONAL)
+
 # Init rtems cmake integration
 include(tools/cmake/rtems.cmake)
 rtems_cmake_init()
@@ -121,9 +123,9 @@ if (HAVE_DEBUGGER)
     )
 endif()
 
-if (HAVE_BSD_NETWORKING)
+if (RTEMS_BSD_STACK)
     set(NETWORK_LIB "bsd")
-elseif (HAVE_LEGACY_NETWORKING)
+elseif (RTEMS_LEGACY_STACK)
     set(NETWORK_LIB "networking")
 endif()
 
