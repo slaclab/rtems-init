@@ -131,10 +131,13 @@ do_mount(const char* ip, const char* src, const char* mntpt,
 
   struct addrinfo* ai = NULL;
   struct addrinfo hint = {0};
-  hint.ai_family = AF_INET;
+  memset(&hint, 0, sizeof(hint));
+  hint.ai_family = PF_INET;
+  hint.ai_socktype;
   hint.ai_flags = AI_PASSIVE;
-  if (getaddrinfo(ip, NULL, &hint, &ai) != 0) {
-    kerror("do_mount: addr lookup failed: %s\n", strerror(errno));
+  int r;
+  if ((r = getaddrinfo(ip, NULL, &hint, &ai)) != 0) {
+    kerror("do_mount: addr lookup failed: %s (%d)\n", gai_strerror(r), r);
     return -1;
   }
 

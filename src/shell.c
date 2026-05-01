@@ -370,9 +370,10 @@ single_getaddrinfo(const char* a)
   struct addrinfo* ai = NULL;
   struct addrinfo hint = {0};
   hint.ai_family = AF_INET;
-  hint.ai_flags = AI_PASSIVE;
-  if (getaddrinfo(a, NULL, &hint, &ai) != 0) {
-    perror("*** Addr lookup failed");
+  hint.ai_flags = AI_CANONNAME;
+  int r;
+  if ((r = getaddrinfo(a, NULL, &hint, &ai)) != 0) {
+    printf("*** Addr lookup failed: %s (%d)\n", gai_strerror(r), r);
     return -1;
   }
 

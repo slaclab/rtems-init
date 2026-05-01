@@ -19,8 +19,10 @@
 #include <rtems/pci.h>
 #include <rtems/error.h>
 #include <rtems/telnetd.h>
+#include <rtems/dhcp.h>
 
 #include <stdint.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -84,7 +86,7 @@ static struct rtems_bsdnet_ifconfig ne2k_driver_config = {
 
 struct rtems_bsdnet_config rtems_bsdnet_config = {
   .network_task_priority = 10,
-  .bootp = rtems_bsdnet_do_bootp,
+  .bootp = rtems_bsdnet_do_bootp_and_rootfs,
   .mbuf_bytecount = RTEMS_NETWORK_CONFIG_MBUF_SPACE * 1024,
   .mbuf_cluster_bytecount = RTEMS_NETWORK_CONFIG_CLUSTER_SPACE * 1024,
   .domainname = "slac.stanford.edu",
@@ -103,6 +105,9 @@ void
 network_init()
 {
   klog("Starting legacy network stack\n");
+
+  /* dhcpcd will fill this out */
+  //creat("/etc/resolv.conf", 0666);
 
   rtems_bsdnet_initialize_network();
   rtems_bsdnet_show_if_stats();

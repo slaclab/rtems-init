@@ -15,6 +15,7 @@
  **/
 #include <rtems.h>
 #include <rtems/ntpd.h>
+#include <rtems/rtems/tasks.h>
 #include <rtems/telnetd.h>
 #include <cexp.h>
 

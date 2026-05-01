@@ -234,15 +234,22 @@ nfsMount(const char* ip, const char* src, const char* mntpt)
   struct addrinfo hint = {0};
   hint.ai_family = AF_INET;
   hint.ai_flags = AI_PASSIVE;
-  if (getaddrinfo(ip, NULL, &hint, &ai) != 0) {
-    printf("do_mount: addr lookup failed: %s\n", strerror(errno));
+  int r;
+  if ((r = getaddrinfo(ip, NULL, &hint, &ai)) != 0) {
+    printf("do_mount: addr lookup failed: %s (%d)\n", gai_strerror(r), r);
     return -1;
   }
 
-  if (ai->ai_addr->sa_len != sizeof(struct sockaddr_in) || 
-      ai->ai_addr->sa_family != AF_INET) {
+  struct addrinfo* oi = ai;
+  for (; ai; ai = ai->ai_next) {
+    if (ai->ai_addr->sa_len == sizeof(struct sockaddr_in) &&
+        ai->ai_addr->sa_family == AF_INET)
+      break;
+  }
+
+  if (!ai) {
     printf("do_mount: addr lookup failed, didn't get ipv4 addr\n");
-    freeaddrinfo(ai);
+    freeaddrinfo(oi);
     return -1;
   }
 
@@ -255,7 +262,7 @@ nfsMount(const char* ip, const char* src, const char* mntpt)
     (si->sin_addr.s_addr & 0x0000FF00) >> 8,
     (si->sin_addr.s_addr & 0x000000FF));
 
-  freeaddrinfo(ai);
+  freeaddrinfo(oi);
 
   /* Ensure mount point exists */
   rtems_mkdir(mntpt, 0777);
