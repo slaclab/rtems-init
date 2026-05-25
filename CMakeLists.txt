@@ -121,6 +121,9 @@ if (HAVE_DEBUGGER)
     target_link_libraries(
         rtems-init PRIVATE debugger
     )
+    target_compile_definitions(
+        rtems-init PRIVATE HAVE_DEBUGGER
+    )
 endif()
 
 if (RTEMS_BSD_STACK)
