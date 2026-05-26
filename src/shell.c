@@ -240,18 +240,31 @@ static int
 shell_debugger_start(int argc, char** argv)
 {
 #ifdef HAVE_DEBUGGER
-  int opt = -1;
+  int opt = -1, verbose = 0, timeout = RTEMS_DEBUGGER_TIMEOUT;
   char port[32] = "1234";
 
   struct getopt_state s = {0};
-  while ((opt = getopt_s(opt, argv, "p:h", &s)) != -1) {
+  while ((opt = getopt_s(opt, argv, "p:hv", &s)) != -1) {
     switch (opt) {
     case 'p':
-      strncpySafe(port, optarg, sizeof(port));
+      strncpySafe(port, s.optarg, sizeof(port));
+      break;
+    case 'v':
+      verbose = 1;
+      break;
+    case 't':
+      timeout = atoi(s.optarg);
+      if (timeout <= 0) {
+        fprintf(stderr, "Bad timeout value, using default\n");
+        timeout = RTEMS_DEBUGGER_TIMEOUT;
+      }
       break;
     default:
     case 'h':
-      fprintf(stderr, "USAGE: %s [-p port] [-t timeout]\n", argv[0]);
+      fprintf(stderr, "USAGE: %s [-p port] [-t timeout] [-v]\n", argv[0]);
+      fprintf(stderr, "  -p PORT     : Port number to use (default: 1234)\n");
+      fprintf(stderr, "  -t TIMEOUT  : Debugger timeout (default: 3)\n");
+      fprintf(stderr, "  -v          : Enable verbose mode (to debug the debugger!)\n");
       return -1;
     }
   }
@@ -259,6 +272,7 @@ shell_debugger_start(int argc, char** argv)
   rtems_debugger_register_tcp_remote();
   rtems_printer printer;
   rtems_print_printer_printf(&printer);
+  rtems_debugger_set_verbose(verbose);
   if (rtems_debugger_start("tcp", port, RTEMS_DEBUGGER_TIMEOUT, 1, &printer) != 0) {
     fprintf(stderr, "Failed to start debugger\n");
     return -1;
@@ -489,7 +503,6 @@ static struct {
   const char* label;
 } FlagMappings[] = {
   {IFF_UP,            "UP"},
-  {IFF_UP,            "IFF_UP"},
   {IFF_BROADCAST,     "IFF_BROADCAST"},
   {IFF_DEBUG,         "IFF_DEBUG"},
   {IFF_LOOPBACK,      "IFF_LOOPBACK"},
