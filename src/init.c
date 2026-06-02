@@ -308,13 +308,25 @@ void
 imfs_init()
 {
   klog("Unpacking rootfs...\n");
-  /** Unpack the rootfs */
+  /* Unpack the rootfs */
   setuid(0);
   if (rtems_tarfs_load("/", tar_rootfs, tar_rootfs_SIZE) < 0) {
     kerror("unable to unpack rootfs!\n");
     rtems_panic("unable to unpack rootfs!\n");
   }
   klog("Finished unpacking rootfs\n");
+
+  /* generate os-release file */
+  FILE* fp = fopen("/etc/os-release", "wb");
+  if (!fp) {
+    kwarn("Failed to generate /etc/os-release\n");
+    return;
+  }
+  
+  fprintf(fp, "NAME=\"RTEMS %d.%d\"\n", __RTEMS_MAJOR__, __RTEMS_MINOR__);
+  fprintf(fp, "ID=rtems\n");
+  fprintf(fp, "VERSION=\"%s\"\n", rtems_get_version_string());
+  fclose(fp);  
 }
 
 /**
