@@ -3,11 +3,19 @@
 set -e
 cd "$(dirname "${BASH_SOURCE[0]}")/../"
 
+TARGET=build-rtems7-pc686-qemu
 while test $# -gt 0; do
     case $1 in
+    -t)
+        TARGET="$2"
+        shift
+        ;;
     -a)
         KARGS="$KARGS $2"
         shift
+        ;;
+    -b)
+        BUILD=1
         ;;
     --gdb)
         QEMUARGS="$QEMUARGS -s -S"
@@ -16,7 +24,12 @@ while test $# -gt 0; do
     shift
 done
 
-KERNEL="build-cmake/build-rtems7-pc686-qemu/rtems-init.exe"
+if [ "${BUILD}"x = "1x" ]; then
+    # Build first
+    make -C build-cmake/${TARGET}
+fi
+
+KERNEL="build-cmake/${TARGET}/rtems-init.exe"
 
 . tests/conf.local.sh
 
