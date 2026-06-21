@@ -10,3 +10,6 @@
 [submodule "lua"]
 	path = modules/lua
 	url = https://github.com/JJL772/lua.git
+[submodule "rtems_waf"]
+	path = rtems_waf
+	url = https://gitlab.rtems.org/rtems/tools/rtems_waf.git

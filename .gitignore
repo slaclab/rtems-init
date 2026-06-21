@@ -28,3 +28,5 @@ docs/build/
 
 # IDE stuff
 /.vscode/
+
+__pycache__
