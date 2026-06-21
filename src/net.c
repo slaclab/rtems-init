@@ -17,7 +17,9 @@
 #include <rtems/ntpd.h>
 #include <rtems/rtems/tasks.h>
 #include <rtems/telnetd.h>
+#ifdef HAVE_CEXP
 #include <cexp.h>
+#endif
 
 #include <stdint.h>
 #include <stdio.h>

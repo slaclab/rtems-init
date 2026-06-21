@@ -18,6 +18,7 @@
  * LICENSE.txt file.
  * ----------------------------------------------------------------------------
  **/
+#include <bsp.h>
 #include <rtems.h>
 #include <bsp.h>
 #include <rtems/bspcmdline.h>
@@ -29,7 +30,7 @@
 #include "rtems-init.h"
 #include "common/util.h"
 
-#if defined(BSP_beatnik) || defined(BSP_mvme3100)
+#if defined(LIBBSP_BEATNIK_BSP_H) || defined(LIBBSP_POWERPC_MVME3100_BSP_H)
 #define MOTLOAD_OFFSET 0x7000
 #define MOTLOAD_HEADER_SIZE 0xF8
 #define MOTLOAD_GEV_SIZE 3592
@@ -186,7 +187,7 @@ parse_boot_foreach(
 int
 boot_param(const char* param, char* result, size_t resultsz)
 {
-#ifdef BSP_uC5282
+#ifdef LIBBSP_M68K_UC5282_BSP_H
   const char* s = bsp_getbenv(param);
   strncpySafe(result, s, resultsz);
   return 0;
@@ -203,7 +204,7 @@ boot_param(const char* param, char* result, size_t resultsz)
 int
 boot_param_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
 {
-#ifdef BSP_uC5282
+#ifdef LIBBSP_M68K_UC5282_BSP_H
   const char* s;
   for (int i = 0; i < sizeof(bootp_params) / sizeof(bootp_params[0]); ++i)
     if (bootp_params[i] && (s = bsp_getbenv(bootp_params[i])))
@@ -222,7 +223,7 @@ boot_param_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
 int
 boot_param_show_all()
 {
-#ifdef BSP_uC5282
+#ifdef LIBBSP_M68K_UC5282_BSP_H
   const char* s;
   for (int i = 0; i < sizeof(bootp_params) / sizeof(bootp_params[0]); ++i)
     if (bootp_params[i] && (s = bsp_getbenv(bootp_params[i])))

@@ -291,7 +291,7 @@ network_init()
 #endif
 
   /* temp hack for mvme5500 */
-#ifdef BSP_beatnik
+#ifdef LIBBSP_BEATNIK_BSP_H
   skip_dhcp |= (BSP_getBoardType() == MVME5500);
 #endif
 

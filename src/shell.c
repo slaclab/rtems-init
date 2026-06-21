@@ -303,7 +303,7 @@ shell_debugger_stop(int argc, char** argv)
 static int
 shell_read_temp(int argc, char** argv)
 {
-#ifdef BSP_beatnik
+#ifdef LIBBSP_BEATNIK_BSP_H
   int fd;
   if ((fd = open("/dev/i2c0.ds1621", O_RDONLY)) < 0) {
     perror("failed to open /dev/i2c0.ds1621");
@@ -896,6 +896,7 @@ int lspci_adv()
   return 0;
 }
 
+#ifdef HAVE_CEXP
 CEXP_HELP_TAB_BEGIN(lspci)
 	HELP(
     "List all PCI devices\n",
@@ -909,6 +910,7 @@ CEXP_HELP_TAB_BEGIN(lspci_adv)
 	  int, lspci_adv,  (void)
 	),
 CEXP_HELP_TAB_END
+#endif // HAVE_CEXP
 
 #endif // HAVE_PCI
 

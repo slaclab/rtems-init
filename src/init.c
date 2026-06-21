@@ -24,6 +24,7 @@
 #include <rtems/sysinit.h>
 #include <rtems/rtems-fdt.h>
 #include <bsp/fdt.h>
+#include <rtems/bspIo.h>
 
 #if HAVE_PCI
 #include <bsp/pci.h>
@@ -350,7 +351,7 @@ shell_init(bool early)
   int which = RTI_CONFIG_LOGIN_SHELL;
 
   /* temp hack for mvme5500 */
-#ifdef BSP_beatnik
+#ifdef LIBBSP_BEATNIK_BSP_H
   if (BSP_getBoardType() == MVME5500)
     which = RTI_SH_RTSH;
 #endif
@@ -430,7 +431,7 @@ earlyshell_prompt()
 void
 early_init()
 {
-#ifdef BSP_uC5282
+#ifdef LIBBSP_M68K_UC5282_BSP_H
   /* hack to workaround missing SYS_CLOCK_SPEED. seems like autodetection
    * of clock speed fails more often than not. Just assume 64MHz for now */
   if (!bsp_getbenv("SYS_CLOCK_SPEED")) {
@@ -438,7 +439,7 @@ early_init()
     extern uint32_t BSP_sys_clk_speed;
     BSP_sys_clk_speed = 64000000;
   }
-#elif defined(BSP_mvme3100)
+#elif defined(LIBBSP_POWERPC_MVME3100_BSP_H)
   //printf("** Setting fdt\n");
   //bsp_fdt_copy(system_dtb);
 #endif

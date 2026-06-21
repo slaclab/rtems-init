@@ -36,7 +36,11 @@
 
 /* Set the default login shell. May be either RTEMS shell or Cexpsh, defaults
  * to Cexpsh */
+#ifdef HAVE_CEXP
 #define RTI_CONFIG_LOGIN_SHELL RTI_SH_CEXP
+#else
+#define RTI_CONFIG_LOGIN_SHELL RTI_SH_RTSH
+#endif
 
 /* Run tests after initialization is complete. Handy for quick debugging */
 #undef RTI_CONFIG_TESTS_ON_BOOT
@@ -68,6 +72,11 @@
 # define HAVE_NVRAM
 # define CONFIGURE_MINIMUM_TASK_STACK_SIZE 8192
 # define CONFIGURE_EXTRA_TASK_STACKS (32 * RTEMS_MINIMUM_STACK_SIZE)
+
+#elif defined(LIBBSP_AARCH64_XILINX_ZYNQMP_BSP_H) /* K26 or other ZynqMP */
+
+# define RTEMS_NETWORK_CONFIG_MBUF_SPACE 2048
+# define RTEMS_NETWORK_CONFIG_CLUSTER_SPACE 5120
 
 #else
 

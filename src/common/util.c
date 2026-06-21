@@ -384,14 +384,16 @@ script_get_type(const char* path)
 const char*
 bsp_get_name()
 {
-#ifdef BSP_beatnik
+#ifdef LIBBSP_BEATNIK_BSP_H
   return "mvme6100";
-#elif defined(BSP_mvme3100)
+#elif defined(LIBBSP_POWERPC_MVME3100_BSP_H)
   return "mvme3100";
-#elif defined(BSP_pc686)
+#elif defined(LIBBSP_I386_PC386_BSP_H)
   return "pc686";
-#elif defined(BSP_uC5282)
+#elif defined(LIBBSP_M68K_UC5282_BSP_H)
   return "uC5282";
+#elif defined(LIBBSP_AARCH64_XILINX_ZYNQMP_BSP_H)
+  return "ZynqMP";
 #else
   #error "Please add an entry to bsp_get_name"
 #endif
