@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+from tools.cmake_configure import cmake_configure
+import argparse
+
+def main():
+    parser = argparse.ArgumentParser()
+    
+    features = {
+        "cexp": {
+            "arg": "ENABLE_CEXP",
+            "help": "Cexpsh (C expression shell) when supported by the BSP",
+            "type": "bool",
+            "default": "ON",
+        },
+        "lua": {
+            "arg": "ENABLE_LUA",
+            "help": "LUA for system level shell scripting",
+            "type": "bool",
+            "default": "ON",
+        },
+        "cexp-text-section": {
+            "arg": "ENABLE_TEXT_SEGMENT",
+            "help": "Defines the size of the Cexpsh text section. Setting to 'default' allows it to be determined per BSP. Otherwise must be a number in bytes.",
+            "default": "default",
+            "type": "str"
+        },
+        "cexp-loader": {
+            "arg": "WITH_CEXP_LOADER",
+            "help": "Sets the loader that Cexpsh should use.",
+            "default": "pmbfd",
+            "choices": ["pmbfd", "rtl", "none"],
+            "type": "str"
+        }
+    }
+
+    cmake_configure(parser, features=features)
+
+if __name__ == '__main__':
+    main()
