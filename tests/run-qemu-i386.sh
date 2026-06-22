@@ -3,7 +3,7 @@
 set -e
 cd "$(dirname "${BASH_SOURCE[0]}")/../"
 
-TARGET=build-rtems7-pc686-qemu
+TARGET=i386-rtems7-pc686
 while test $# -gt 0; do
     case $1 in
     -t)
@@ -26,10 +26,10 @@ done
 
 if [ "${BUILD}"x = "1x" ]; then
     # Build first
-    make -C build-cmake/${TARGET}
+    make -C build/${TARGET}
 fi
 
-KERNEL="build-cmake/${TARGET}/rtems-init.exe"
+KERNEL="build/${TARGET}/rtems-init.exe"
 
 . tests/conf.local.sh
 
