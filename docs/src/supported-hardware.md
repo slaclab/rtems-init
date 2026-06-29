@@ -9,6 +9,7 @@
 | mvme5500   | beatnik  | libbsd           | `em` network driver currently does not work |
 | uC5282     | uC5282   | legacy           | |
 | pc686      | i386     | libbsd           | For testing in Qemu |
+| K26 SOM    | zynqmp-api | libbsd         | Tested on Xilinx Kv260 devkit (w/K26 SOM) |
 
 
 ## BSP Preprocessor Checks
