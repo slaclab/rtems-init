@@ -2,16 +2,22 @@
 
 [doi: 10.11578/dc.20260312.1](https://doi.org/10.11578/dc.20260312.1)
 
-An init system and testing framework for RTEMS applications.
+rtems-init is an init system and configuration framework for RTEMS 7+. It integrates several modules together
+into a self-contained package that can then load and run EPICS IOCs dynamically via Cexp.
 
-rtems-init performs necessary setup (DHCP, NTP), and provides a framework for system configuration.
-This is mostly targeted at EPICS IOCs, particularly ones that need additional system configuration outside of EPICS base itself.
+Even though rtems-init is designed with EPICS IOCs in mind, it can also be used as a generic RTEMS system image.
 
 ## Configuring
 
-Makefile.cmake is a utility makefile that will configure the build for you.
+A `configure` script (written in Python 3.10+) is provided to easily configure for all supported targets. Use the following
+to configure if you're in a checkout of rtems-top:
+```sh
+./configure --rtems-top="$PWD/../../"
 ```
-make -f Makefile.cmake TARGETS="rtems7-uC5282 rtems7-beatnik rtems7-mvme3100" PREFIX=/sdf/group/cds/sw/epics/users/lorelli/rtems/7.0
+
+The `--prefix` parameter may be explicitly specified to install to a separate prefix:
+```sh
+./configure --rtems-top="$PWD/../../" --prefix=/sdf/group/cds/sw/epics/users/lorelli/rtems/7.0/target/rtems
 ```
 
 ## Boot Process
@@ -27,6 +33,7 @@ The following BSPs have been tested with rtems-init:
 - powerpc/mvme3100
 - m68k/uC5282
 - i386/pc686 (QEMU)
+- aarch64/xilinx-k26 (ZynqMP APU)
 
 ## Simulating with QEMU
 
