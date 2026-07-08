@@ -24,8 +24,10 @@ extern void *POSIX_Init(void *argument);
  * RTEMS configuration
 \****************************************************************************/
 
-/* Match value in EPICS base (64): */
-#define CONFIGURE_MAXIMUM_FILE_DESCRIPTORS  64
+/* RTEMS 7+ select() call works with at most 256 descriptors. It also doesn't
+ * recycle fd's anymore, so calling open()/close() 256 times will allocate you
+ * fd 0 again via round-robin */
+#define CONFIGURE_MAXIMUM_FILE_DESCRIPTORS  256
 #define CONFIGURE_IMFS_ENABLE_MKFIFO        2
 
 #define CONFIGURE_MAXIMUM_NFS_MOUNTS 		    3
