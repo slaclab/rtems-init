@@ -30,7 +30,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef HAVE_CEXP
 #include <cexp.h>
+#endif
 
 #include "rtems-init.h"
 #include "common/util.h"

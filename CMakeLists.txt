@@ -109,12 +109,24 @@ elseif("${RTEMS_NETWORKING_STACK}" STREQUAL "BSD")
     )
 endif()
 
-set (USE_CEXP 1)
-rtems_add_executable(
-    TARGET rtems-init
-    CEXPSH  # Enable Cexpsh symbol table generation
-    SOURCES ${RTEMS_INIT_SRCS}
-)
+if (ENABLE_CEXP)
+    rtems_add_executable(
+        TARGET rtems-init
+        CEXPSH  # Enable Cexpsh symbol table generation
+        SOURCES ${RTEMS_INIT_SRCS}
+    )
+else()
+    rtems_add_executable(
+        TARGET rtems-init
+        RTEMS_SYMS  # RTEMS RTL symbol table
+        SOURCES ${RTEMS_INIT_SRCS}
+    )
+endif()
+
+# Add a u-boot image for targets that generally need it.
+if ("${RTEMS_ARCH}" STREQUAL "aarch64")
+    rtems_add_uboot_image(rtems-init 0x10000)
+endif()
 
 rtems_include_libs(
     TARGET rtems-init
@@ -158,10 +170,17 @@ elseif (RTEMS_LEGACY_STACK)
     set(NETWORK_LIB "networking")
 endif()
 
+if (ENABLE_CEXP)
+    target_link_libraries(
+        rtems-init PRIVATE
+
+        cexp
+    )
+endif()
+
 target_link_libraries(
     rtems-init PRIVATE
-    
-    cexp
+
     ntp
     ttcp
     telnetd

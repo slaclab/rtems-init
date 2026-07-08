@@ -28,7 +28,7 @@
 
 #include "util.h"
 
-#define KLOG_STREAM stdout
+#define KLOG_STREAM stderr
 
 struct _event_s
 {

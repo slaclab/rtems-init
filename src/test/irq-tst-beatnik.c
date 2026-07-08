@@ -21,6 +21,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#ifndef BSP_IRQ_GPP_0
+#define BSP_IRQ_GPP_0 64
+#endif
+
 #define RTC_IRQ (BSP_IRQ_GPP_0 + 3)
 #define WDNMI_IRQ (BSP_IRQ_GPP_0 + 6)
 #define TEST_IRQ RTC_IRQ
@@ -36,7 +40,7 @@ static void
 dummy_irq(void* p)
 {
   if (++s_counter == 5)
-    BSP_disable_irq_at_pic(TEST_IRQ);
+    rtems_interrupt_vector_disable(TEST_IRQ);
 
   /* Read the FLAGS register to clear the interrupt */
   uint8_t fl = *(volatile uint8_t*)(RTC_BASE_ADDR + 0x7FF0);
@@ -77,19 +81,23 @@ legacy_irq_tst()
 {
   int ret = 0;
   s_counter = 0;
+  
+  rtems_status_code sc = rtems_interrupt_handler_install(
+    TEST_IRQ,
+    "RTC",
+    RTEMS_INTERRUPT_UNIQUE,
+    dummy_irq,
+    NULL
+  );
 
-  const rtems_irq_connect_data data = {
-    .name = TEST_IRQ,
-    .hdl = dummy_irq,
-  };
-  if (!BSP_install_rtems_irq_handler(&data)) {
-    printf("BSP_install_rtems_irq_handler: failed\n");
+  if (sc != RTEMS_SUCCESSFUL) {
+    printf("rtems_interrupt_handler_install: failed\n");
     return 1;
   }
 
-  BSP_enable_irq_at_pic(TEST_IRQ);
+  rtems_interrupt_vector_enable(TEST_IRQ);
 
-  if (BSP_irq_set_priority(TEST_IRQ, 2) != 0) {
+  if (rtems_interrupt_set_priority(TEST_IRQ, 2) != 0) {
     printf("BSP_irq_set_priority: failed\n");
     ret = 1;
   }
@@ -105,7 +113,7 @@ legacy_irq_tst()
     ret = 1;
   }
 
-  if (!BSP_remove_rtems_irq_handler(&data)) {
+  if (!rtems_interrupt_handler_remove(TEST_IRQ, dummy_irq, NULL)) {
     printf("BSP_remove_rtems_irq_handler: failed\n");
     return 1;
   }

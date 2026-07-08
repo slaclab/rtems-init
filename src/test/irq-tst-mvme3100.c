@@ -98,6 +98,8 @@ cnt_isr(void* p)
   }
 }
 
+static int alwaysOn(const rtems_irq_connect_data* u) { return 1; }
+
 /* New style IRQ test using the rtems_interrupt API */
 int
 irq_test()
@@ -117,7 +119,7 @@ irq_test()
     .name = TIMER_IRQ,
     .hdl = cnt_isr,
     .handle = &me,
-    .isOn = true,
+    .isOn = alwaysOn,
   };
   BSP_install_rtems_irq_handler(&data);
 

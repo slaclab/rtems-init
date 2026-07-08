@@ -75,24 +75,24 @@ enum init_mode init_mode = INIT_MODE_CMDLINE;
 char startup_script[PATH_MAX];
 
 /**
- * Do serial init tasks, mostly to disable certain types of control on stdin
+ * Do serial init tasks -- Prepare stdin for shell input, print out basic version info,
+ * and setup i2c bus on targets with support.
  */
 void
 serial_init()
 {
   ios_shell_input(fileno(stdin), NULL);
 
-  /** Display our really cool banner */
   puts(BANNER);
 
-  kclog(KLOG_BLUE, "*** RTEMS : %s\n", rtems_get_version_string());
-  kclog(KLOG_BLUE, "*** SLAC RTEMS Init System : Built %s %s\n", __DATE__, __TIME__);
+  kclog(KLOG_BLUE, "RTEMS : %s\n", rtems_get_version_string());
+  kclog(KLOG_BLUE, "SLAC RTEMS Init System : Built %s %s\n", __DATE__, __TIME__);
 #ifdef RTEMS_BSD_STACK
-  kclog(KLOG_BLUE, "*** Network Stack : BSD\n");
+  kclog(KLOG_BLUE, "Network Stack : BSD\n");
 #elif defined(RTEMS_LEGACY_STACK)
-  kclog(KLOG_BLUE, "*** Network Stack : Legacy\n");
+  kclog(KLOG_BLUE, "Network Stack : Legacy\n");
 #else
-  kclog(KLOG_BLUE, "*** No networking stack\n");
+  kclog(KLOG_BLUE, "No networking stack\n");
 #endif
   klog("BSP command line: %s\n", rtems_bsp_cmdline_get());
 
@@ -101,9 +101,18 @@ serial_init()
 #endif
 }
 
+/**
+ * Mounts a remote file system at the specified mount point.
+ */
 static int
-do_mount(const char* ip, const char* src, const char* mntpt, 
-  uint32_t uid, uint32_t gid, enum fstype type)
+do_mount(
+  const char* ip,
+  const char* src,
+  const char* mntpt, 
+  uint32_t uid,
+  uint32_t gid,
+  enum fstype type
+)
 {
   const char* fs = NULL;
   int vers = 3, isnfs = 0;
@@ -121,20 +130,19 @@ do_mount(const char* ip, const char* src, const char* mntpt,
     isnfs = 1;
     break;
   case FS_TYPE_9P:
-    /** Unsupported for now */
+    /* Unsupported for now */
   default:
     kerror("do_mount: unsupported FS type: %d\n", type);
     return -1;
   }
 
-  /** Ensure mount point exists */
+  /* Ensure mount point exists */
   rtems_mkdir(mntpt, 0777);
 
   struct addrinfo* ai = NULL;
   struct addrinfo hint = {0};
   memset(&hint, 0, sizeof(hint));
   hint.ai_family = PF_INET;
-  hint.ai_socktype;
   hint.ai_flags = AI_PASSIVE;
   int r;
   if ((r = getaddrinfo(ip, NULL, &hint, &ai)) != 0) {
@@ -205,10 +213,10 @@ mounts_init()
     }
   }
 
-  /** Mount FS that includes cmdline */
+  /* Mount FS that includes cmdline */
   bp = getenv("BP_PARM");
   if (bp) {
-    /** FIXME: actually parse this lol */
+    /* Not doing "proper" parsing here */
     if (!strncmp(bp, "INIT=", sizeof("INIT=")-1))
       bp += sizeof("INIT=")-1;
 
@@ -236,7 +244,7 @@ mounts_init()
 cmdline_mnt:
 
 #if __i386__
-  /** On i386, parse mounts provided by BSP command line */
+  /* On i386, parse mounts provided by BSP command line */
   if (rtems_bsp_cmdline_get_param("--mount", value, sizeof(value))) {
     if (parse_mount_spec(value + sizeof("--mount"), 
         &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
@@ -309,6 +317,7 @@ void
 imfs_init()
 {
   klog("Unpacking rootfs...\n");
+
   /* Unpack the rootfs */
   setuid(0);
   if (rtems_tarfs_load("/", tar_rootfs, tar_rootfs_SIZE) < 0) {
@@ -323,11 +332,11 @@ imfs_init()
     kwarn("Failed to generate /etc/os-release\n");
     return;
   }
-  
+
   fprintf(fp, "NAME=\"RTEMS %d.%d\"\n", __RTEMS_MAJOR__, __RTEMS_MINOR__);
   fprintf(fp, "ID=rtems\n");
   fprintf(fp, "VERSION=\"%s\"\n", rtems_get_version_string());
-  fclose(fp);  
+  fclose(fp);
 }
 
 /**
@@ -446,7 +455,7 @@ early_init()
 }
 
 /**
- * Execute the rc.lua file
+ * Execute any rc.(cmd|lua) scripts in /etc/
  */
 static void
 rc_init()
@@ -506,7 +515,7 @@ cexpsh_exec_script(const char* script)
   chdir(olddir);
   return r;
 #else
-  klog("Cannot execute '%s': Cexpsh support not compiled in\n", script);
+  klog("Cannot execute '%s': Cexpsh support not enabled\n", script);
   return -1;
 #endif
 }
