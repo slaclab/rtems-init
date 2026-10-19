@@ -554,7 +554,7 @@ shell_getifaddrs(int argc, char** argv)
       printf("  inet_dstaddr: %s\n", _ntoa(f->ifa_dstaddr));
     if (f->ifa_netmask->sa_family == AF_INET)
       printf("  inet_netmask: %s\n", _ntoa(f->ifa_netmask));
-    
+
     if (f->ifa_addr->sa_family == AF_LINK) {
       struct sockaddr_dl* dl = (struct sockaddr_dl*)f->ifa_addr;
       printf("  sdl_index: %d\n", dl->sdl_index);
@@ -590,11 +590,11 @@ lspci()
           continue;
         if (vendor == 0xFFFF && device == 0xFFFF)
           continue;
-        
+
         uint8_t type = 0;
         if (pci_read_config_byte(bus, slot, func, PCI_HEADER_TYPE, &type) != 0)
           printf("failed to read PCI_HEADER_TYPE\n");
-          
+
         printf("0x%04x 0x%04x 0x%04x   0x%04x:0x%04x   0x%04x\n",
           bus, slot, func, vendor, device, (int)type);
       }
