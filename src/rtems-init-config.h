@@ -24,7 +24,7 @@
  * This shows on every boot to prompt the user to enter an early debug shell,
  * before a bulk of system init is done.
  * Set to 0 to skip entirely. */
-#define RTI_CONFIG_EARLYSHELL_TIMEOUT 3
+#define RTI_CONFIG_EARLYSHELL_TIMEOUT 0
 
 /* When set, skip network initialization. Handy for quick debugging on BSPs
  * that don't have a functioning network stack (i.e. in the process of porting
