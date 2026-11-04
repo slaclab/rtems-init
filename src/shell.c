@@ -76,6 +76,8 @@ static int shell_pci_probe(int argc, char** argv);
 static int shell_rtems_sh(int argc, char** argv);
 
 extern int shell_lua_main(int argc, char** argv);
+extern int shell_luainfo_main(int argc, char** argv);
+extern int shell_luad_main(int argc, char** argv);
 
 #define GEV_SHOW_USAGE "gevShow -- Display all GEV NVRAM parameters"
 #define GEV_GET_USAGE "gevGet paramName -- Display value of a specific GEV parameter"
@@ -89,6 +91,8 @@ extern int shell_lua_main(int argc, char** argv);
 #define DUMPENV_USAGE "dumpenv -- Dump the environment"
 #define LSPCI_USAGE "lspci -- Probe PCI buses"
 #define LUA_USAGE "lua -- Start interactive lua interpreter"
+#define LUA_INFO "luainfo -- Display Lua heap info"
+#define LUAD_USAGE "luad -- Start/stop a Lua script as a daemon"
 
 /** !!! This is internal and I probably shouldn't do this! */
 extern rtems_shell_cmd_t* rtems_shell_first_cmd;
@@ -122,6 +126,8 @@ struct shell_cmd shell_cmds[] =
   { "ttcp",       "net",    "ttcp test",          rtems_shell_main_ttcp },
 #ifdef HAVE_LUA
   { "lua",        "misc",   LUA_USAGE,            shell_lua_main },
+  { "luainfo",    "misc",   LUA_INFO,             shell_luainfo_main },
+  { "luad",       "misc",   LUAD_USAGE,           shell_luad_main },
 #endif
   { NULL,         NULL,     NULL,                 NULL },
 };
