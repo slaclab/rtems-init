@@ -118,9 +118,9 @@ irq_test()
 
   int safeguard = 0;
   while (s_irqCnt < 20) {
-    usleep(500000);
+    sleep(1);
     safeguard++;
-    if (safeguard > 60) { /* 30s timeout */
+    if (safeguard > 30) { /* 30s timeout */
       printf("irq_tst: timeout!\n");
       status = -1;
       break;
@@ -186,10 +186,10 @@ fpga_irq_test()
   
   int safe = 0;
   while (s_irqCnt < 1) {
-    usleep(500000);
+    sleep(1);
     safe++;
 
-    if (safe > 60) {
+    if (safe > 30) {
       printf("fpga_irq_test: timeout\n");
       status = -1;
       break;

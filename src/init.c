@@ -142,7 +142,7 @@ do_mount(
   struct addrinfo* ai = NULL;
   struct addrinfo hint = {0};
   memset(&hint, 0, sizeof(hint));
-  hint.ai_family = PF_INET;
+  hint.ai_family = AF_INET;
   hint.ai_flags = AI_PASSIVE;
   int r;
   if ((r = getaddrinfo(ip, NULL, &hint, &ai)) != 0) {
@@ -270,7 +270,7 @@ end:
 void
 path_init()
 {
-  /* dump all bootp/dhcp settings*/
+  /* dump all bootp/dhcp settings */
   klog("BOOTP Setting Summary:\n");
   for (const char** s = bootp_params; *s; s++) {
     const char* e = getenv(*s);

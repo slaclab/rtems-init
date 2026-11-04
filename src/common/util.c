@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <termios.h>
+#include <strings.h>
 
 #include "util.h"
 

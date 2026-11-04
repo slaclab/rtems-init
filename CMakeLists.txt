@@ -162,6 +162,10 @@ target_include_directories(
     rtems-init PUBLIC src
 )
 
+target_compile_definitions(
+    rtems-init PUBLIC -D_GNU_SOURCE
+)
+
 get_target_property(CURRENT_LINK_FLAGS rtems-init LINK_FLAGS)
 
 # Force linker to emit symbols
