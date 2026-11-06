@@ -46,7 +46,7 @@ struct dhcp_runtime_cfg
   char ip[64];
   char routers[128];
   
-  struct _event_s* event;
+  rtems_id waiting_task;
 };
 
 enum init_mode {

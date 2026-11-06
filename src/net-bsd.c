@@ -19,6 +19,7 @@
 #include <rtems/telnetd.h>
 #include <rtems/dhcpcd.h>
 #include <rtems/bsd/util.h>
+#include <rtems/error.h>
 #include <machine/rtems-bsd-commands.h>
 #include <rtems/ntpd.h>
 #include <syslog.h>
@@ -200,7 +201,7 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
       setenv("BP_GTWY", dhcp_runtime_cfg.routers, 1);
     }
 
-    event_signal(dhcp_runtime_cfg.event);
+    rtems_event_send(dhcp_runtime_cfg.waiting_task, RTEMS_EVENT_30);
   }
 }
 
@@ -218,16 +219,23 @@ static char* dhcpcd_args[] = {
 static void
 do_dhcp()
 {
-  dhcp_runtime_cfg.event = event_create();
-  assert(dhcp_runtime_cfg.event);
+  rtems_event_set events;
+  rtems_status_code sc;
 
-  /** Start dhcpcd for network configuration */
+  dhcp_runtime_cfg.waiting_task = rtems_task_self();
+
+  /* Start dhcpcd for network configuration */
   rtems_dhcpcd_add_hook(&dhcpcd_hook);
   rtems_dhcpcd_start(NULL);
 
-  if (event_wait(dhcp_runtime_cfg.event, 300 * 1000) != ETIMEDOUT)
-    event_destroy(dhcp_runtime_cfg.event);
-  /** FIXME: timeout leaks an event */
+  sc = rtems_event_receive(
+    RTEMS_EVENT_30,
+    RTEMS_WAIT,
+    rtems_clock_get_ticks_per_second() * 30,
+    &events
+  );
+  if (sc != RTEMS_TIMEOUT || sc != RTEMS_SUCCESSFUL)
+    rtems_error(sc, "do_dhcp: rtems_event_recv");
 }
 
 static int
@@ -276,7 +284,7 @@ network_init()
     return;
   }
 
-  rtems_bsd_setlogpriority("debug");
+  rtems_bsd_setlogpriority(verbose ? "debug" : "err");
   //rtems_bsd_set_vprintf_handler(bsd_vprintf_logger);
 
   if (rtems_bsd_ifconfig_lo0() != 0) {
@@ -290,11 +298,6 @@ network_init()
   /* Check if BSP skips DHCP altogether */
 #ifdef RTI_CONFIG_SKIP_DHCP
   skip_dhcp = true;
-#endif
-
-  /* temp hack for mvme5500 */
-#ifdef LIBBSP_BEATNIK_BSP_H
-  skip_dhcp |= (BSP_getBoardType() == MVME5500);
 #endif
 
   if (!skip_dhcp) {
@@ -322,7 +325,7 @@ network_init()
 #endif
   }
   
-  /** Display current configuration */
+  /* Display current configuration */
   static char* IFCONFIG_ARGS[] = {"ifconfig", NULL};
   rtems_bsd_command_ifconfig(1, IFCONFIG_ARGS);
   

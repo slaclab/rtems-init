@@ -68,7 +68,7 @@ static const char* BANNER =
 
 struct dhcp_runtime_cfg dhcp_runtime_cfg;
 
-int verbose = 1;
+int verbose = 0;
 
 enum init_mode init_mode = INIT_MODE_CMDLINE;
 

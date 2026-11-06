@@ -149,15 +149,6 @@ enum script_type {
 /* Returns the script type based on file extension */
 enum script_type script_get_type(const char* path);
 
-/**
- * \brief Generic thread events API
- */
-typedef struct _event_s event_t;
-extern event_t* event_create();
-extern int event_wait(event_t* ev, uint64_t timeout_ms);
-extern void event_signal(event_t* ev);
-extern void event_destroy(event_t* ev);
-
 extern void bsp_cmdline_get_param(const char* param, char* val, size_t vlen);
 extern int bsp_cmdline_has_param(const char* param);
 
