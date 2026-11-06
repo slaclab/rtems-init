@@ -20,6 +20,7 @@
 #include <rtems/dhcpcd.h>
 #include <rtems/bsd/util.h>
 #include <rtems/error.h>
+#include <rtems/bspcmdline.h>
 #include <machine/rtems-bsd-commands.h>
 #include <rtems/ntpd.h>
 #include <syslog.h>
@@ -300,29 +301,43 @@ network_init()
   skip_dhcp = true;
 #endif
 
+  char netconf[256] = {0};
+
+  /* static network config may also be provided this way */
+  if (rtems_bsp_cmdline_get_param("--netconfig", netconf, sizeof netconf)) {
+    char* iface = strtok(netconf + sizeof("--netconfig"), ",");
+    char* ip = strtok(NULL, ",");
+    char* nm = strtok(NULL, ",");
+
+    if (!nm || !iface || !ip) {
+      kerror("network_init: --netconfig malformed. Skipping static config\n");
+    } else {
+
+      klog("network_init: setting up %s inet %s netmask %s\n",
+        iface, ip, nm);
+
+      char* ifcmd[] = {
+        "ifconfig",
+        iface,
+        "inet",
+        ip,
+        "netmask",
+        nm,
+        NULL
+      };
+
+      r = rtems_bsd_command_ifconfig(RTEMS_BSD_ARGC(ifcmd), ifcmd);
+      if (r != EXIT_SUCCESS) {
+        kerror("network_init: Static IP config failed\n");
+      }
+    }
+  }
+
   if (!skip_dhcp) {
     do_dhcp();
   }
   else {
     klog("Skipping dhcp per request\n");
-
-#ifdef LIBBSP_I386_PC386_BSP_H
-    /** QEMU specific configuration for e1000 */
-    char* ifcmd[] = {
-      "ifconfig",
-      "em0",
-      "inet",
-      "10.0.2.15",
-      "netmask",
-      "255.255.255.0",
-      NULL
-    };
-
-    if (rtems_bsd_command_ifconfig(RTEMS_BSD_ARGC(ifcmd), ifcmd) 
-          != EXIT_SUCCESS) {
-      kerror("network_init: rtems_bsd_command_ifconfig failed\n");
-    }
-#endif
   }
   
   /* Display current configuration */
