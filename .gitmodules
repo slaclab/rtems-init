@@ -10,3 +10,6 @@
 [submodule "lua"]
 	path = modules/lua
 	url = https://github.com/JJL772/lua.git
+[submodule "modules/t9p"]
+	path = modules/t9p
+	url = git@github.com:slaclab/t9p.git

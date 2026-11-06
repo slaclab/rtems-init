@@ -31,7 +31,13 @@ def main():
             "default": "pmbfd",
             "choices": ["pmbfd", "rtl", "none"],
             "type": "str"
-        }
+        },
+        "9p": {
+            "arg": "ENABLE_9P",
+            "help": "Enables 9P filesystem support using t9p",
+            "default": "ON",
+            "type": "bool",
+        },
     }
 
     cmake_configure(parser, features=features)

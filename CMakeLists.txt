@@ -67,6 +67,22 @@ else()
 endif()
 
 ###################################################
+# t9p
+###################################################
+if (ENABLE_9P)
+    set(T9P_SRCS
+        modules/t9p/src/t9p.c
+        modules/t9p/src/t9proto.c
+        modules/t9p/src/t9p_mem.c
+        modules/t9p/src/t9p_posix.c
+        modules/t9p/src/t9p_rtems.c
+    )
+    message(STATUS "9P is ENABLED")
+else()
+    message(STATUS "9P is DISABLED")
+endif()
+
+###################################################
 # rtems-init
 ###################################################
 set(RTEMS_INIT_SRCS
@@ -96,6 +112,14 @@ if (ENABLE_LUA)
         modules/lua/onelua.c
         modules/lua/lua.c
         src/rtems-lua.c
+    )
+endif()
+
+if (ENABLE_9P)
+    list(
+        APPEND RTEMS_INIT_SRCS
+
+        ${T9P_SRCS}
     )
 endif()
     
