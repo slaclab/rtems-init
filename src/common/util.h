@@ -96,6 +96,11 @@ parse_mount_spec(
 );
 
 /**
+ * \brief Returns 1 if the IP is a valid IPv4, with an optional !PORT suffix.
+ */
+extern int valid_ipv4(const char* ip);
+
+/**
  * \brief Convert mount paths to normal paths
  * Ex: /sdf/sw:epics/base -> /sdf/sw/epics/base
  */

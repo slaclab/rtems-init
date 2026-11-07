@@ -42,6 +42,10 @@
 #include "config.h"
 #include "rtems-init-config.h"
 
+#ifdef HAVE_9P
+#include "t9p_rtems.h"
+#endif
+
 #ifdef HAVE_LUA
 #include "lua.h"
 #endif
@@ -116,6 +120,8 @@ do_mount(
 {
   const char* fs = NULL;
   int vers = 3, isnfs = 0;
+  char newip[128];
+
   switch (type) {
   case FS_TYPE_NFS3:
     vers = 3, fs = RTEMS_FILESYSTEM_TYPE_NFS;
@@ -130,7 +136,12 @@ do_mount(
     isnfs = 1;
     break;
   case FS_TYPE_9P:
-    /* Unsupported for now */
+#ifdef HAVE_9P
+    fs = "9p";
+    break;
+#else
+    [[fallthrough]]
+#endif
   default:
     kerror("do_mount: unsupported FS type: %d\n", type);
     return -1;
@@ -139,35 +150,40 @@ do_mount(
   /* Ensure mount point exists */
   rtems_mkdir(mntpt, 0777);
 
-  struct addrinfo* ai = NULL;
-  struct addrinfo hint = {0};
-  memset(&hint, 0, sizeof(hint));
-  hint.ai_family = AF_INET;
-  hint.ai_flags = AI_PASSIVE;
-  int r;
-  if ((r = getaddrinfo(ip, NULL, &hint, &ai)) != 0) {
-    kerror("do_mount: addr lookup failed: %s (%d)\n", gai_strerror(r), r);
-    return -1;
-  }
+  /* resolve if we don't have a valid IP */
+  if (!valid_ipv4(ip)) {
+    struct addrinfo* ai = NULL;
+    struct addrinfo hint = {0};
+    memset(&hint, 0, sizeof(hint));
+    hint.ai_family = AF_INET;
+    hint.ai_flags = AI_PASSIVE;
+    int r;
+    if ((r = getaddrinfo(ip, NULL, &hint, &ai)) != 0) {
+      kerror("do_mount: addr lookup failed: %s (%d)\n", gai_strerror(r), r);
+      return -1;
+    }
 
-  if (ai->ai_addr->sa_len != sizeof(struct sockaddr_in) || 
-      ai->ai_addr->sa_family != AF_INET) {
-    kerror("do_mount: addr lookup failed, didn't get ipv4 addr\n");
+    if (ai->ai_addr->sa_len != sizeof(struct sockaddr_in) || 
+        ai->ai_addr->sa_family != AF_INET) {
+      kerror("do_mount: addr lookup failed, didn't get ipv4 addr\n");
+      freeaddrinfo(ai);
+      return -1;
+    }
+
+    char newip[128];
+    struct sockaddr_in* si =
+      (struct sockaddr_in*)ai->ai_addr;
+    si->sin_addr.s_addr = ntohl(si->sin_addr.s_addr);
+    snprintf(newip, sizeof(newip), "%u.%u.%u.%u",
+      (si->sin_addr.s_addr & 0xFF000000) >> 24,
+      (si->sin_addr.s_addr & 0x00FF0000) >> 16,
+      (si->sin_addr.s_addr & 0x0000FF00) >> 8,
+      (si->sin_addr.s_addr & 0x000000FF));
+
     freeaddrinfo(ai);
-    return -1;
+  } else {
+    strncpySafe(newip, ip, sizeof(newip));
   }
-
-  char newip[128];
-  struct sockaddr_in* si =
-    (struct sockaddr_in*)ai->ai_addr;
-  si->sin_addr.s_addr = ntohl(si->sin_addr.s_addr);
-  snprintf(newip, sizeof(newip), "%u.%u.%u.%u",
-    (si->sin_addr.s_addr & 0xFF000000) >> 24,
-    (si->sin_addr.s_addr & 0x00FF0000) >> 16,
-    (si->sin_addr.s_addr & 0x0000FF00) >> 8,
-    (si->sin_addr.s_addr & 0x000000FF));
-
-  freeaddrinfo(ai);
 
   char source[512];
   snprintf(source, sizeof(source), "%s:%s", newip, src);
@@ -175,8 +191,13 @@ do_mount(
   char opts[512] = {0};
   /* FIXME: uid gid? */
   /* Always mounting these as read-only, data area should be rw  */
-  if (isnfs)
+  if (isnfs) {
     snprintf(opts, sizeof(opts), "vers=%d,ro", vers);
+  } else if (type == FS_TYPE_9P) {
+    snprintf(opts, sizeof(opts), "ro,uid=%d,gid=%d", uid, gid);
+  }
+
+  klog("Mounting %s %s at %s with opts %s\n", fs, source, mntpt, opts);
 
   if (mount(source, mntpt, fs, 0, opts) < 0)
     return -1;
@@ -200,6 +221,10 @@ mounts_init()
   int opt = 0;
 
   klog("Setting up mounts\n");
+
+#ifdef HAVE_9P
+  t9p_rtems_register();
+#endif
 
   /* Mount FS that includes the boot file */
   bp = getenv("BP_FILE");

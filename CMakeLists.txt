@@ -192,6 +192,15 @@ if (HAVE_DEBUGGER)
     )
 endif()
 
+if (ENABLE_9P)
+    target_compile_definitions(
+        rtems-init PRIVATE HAVE_9P
+    )
+    target_include_directories(
+        rtems-init PRIVATE modules/t9p/src
+    )
+endif()
+
 if (RTEMS_BSD_STACK)
     set(NETWORK_LIB "bsd")
 elseif (RTEMS_LEGACY_STACK)

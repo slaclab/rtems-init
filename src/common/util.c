@@ -25,7 +25,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <termios.h>
+#include <ctype.h>
 #include <strings.h>
+#include <arpa/inet.h>
 
 #include "util.h"
 
@@ -79,16 +81,16 @@ parse_mount_spec(const char* mntblock, enum fstype* fstype, uint32_t* uid,
     *fstype = FS_TYPE_NFS3;
   mntblock += skip;
 
-  /** Try to find optional 1234.4567@ prefix */
+  /* Try to find optional UID.GID@ prefix */
   const char* p = strpbrk(mntblock, "@");
   if (p) {
     const char* g = strpbrk(mntblock, ".");
-    /** Must be lone uid */
+    /* Must be lone uid */
     if (!g || g > p) {
       char* ep = p-1;
       *uid = strtol(mntblock, &ep, 10);
     }
-    /** full uid.gid */
+    /* full uid.gid */
     else {
       char* ep = g-1;
       *uid = strtol(mntblock, &ep, 10);
@@ -98,7 +100,7 @@ parse_mount_spec(const char* mntblock, enum fstype* fstype, uint32_t* uid,
     mntblock = p+1;
   }
 
-  /** Find end of server decl */
+  /* Find end of server decl */
   const char* srvend = strchr(mntblock, ':');
 
   if (!srvend)
@@ -114,29 +116,42 @@ parse_mount_spec(const char* mntblock, enum fstype* fstype, uint32_t* uid,
   strncpySafe(src, mntblock, min(MNT_STR_BUF_SZ, srvend-mntblock+1));
   mntblock = srvend+1;
 
-  /** Next part is optional; it may be either file name or the mountpoint */
+  /* Next part is optional; it may be either file name or the mountpoint */
   const char* mntend = strchr(mntblock, ':');
   if (!mntend) {
     *file = *mntpt = 0;
-    /** mountpoint the same as the source */
+    /* mountpoint the same as the source */
     strncpySafe(mntpt, src, MNT_STR_BUF_SZ);
-    /** And the remaining bytes are the file */
+    /* And the remaining bytes are the file */
     strncpySafe(file, mntblock, MNT_STR_BUF_SZ);
     return 0;
   }
 
-  /** If we still have remaining text, this is the file name */
+  /* If we still have remaining text, this is the file name */
   if (*(mntend+1)) {
     strncpySafe(file, mntend+1, MNT_STR_BUF_SZ);
-    /** And the previous block was mount point */
+    /* And the previous block was mount point */
     strncpySafe(mntpt, mntblock, min(MNT_STR_BUF_SZ, mntend-mntblock+1));
   }
-  /** Otherwise, the previous block was file */
+  /* Otherwise, the previous block was file */
   else {
     strncpySafe(file, mntblock, min(MNT_STR_BUF_SZ, mntend-mntblock+1));
   }
 
   return 0;
+}
+
+int
+valid_ipv4(const char* ip)
+{
+  struct in_addr ina;
+  char* sav = NULL;
+  char buf[128];
+
+  strncpySafe(buf, ip, sizeof(buf));
+  strtok_r(buf, "!", &sav);
+
+  return inet_aton(buf, &ina);
 }
 
 int
