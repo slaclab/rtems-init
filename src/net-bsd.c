@@ -235,8 +235,8 @@ do_dhcp()
     rtems_clock_get_ticks_per_second() * 30,
     &events
   );
-  if (sc != RTEMS_TIMEOUT || sc != RTEMS_SUCCESSFUL)
-    rtems_error(sc, "do_dhcp: rtems_event_recv");
+  if (sc != RTEMS_TIMEOUT && sc != RTEMS_SUCCESSFUL)
+    rtems_error(sc | RTEMS_ERROR_ERRNO, "do_dhcp: rtems_event_recv");
 }
 
 static int
