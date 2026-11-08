@@ -2,11 +2,10 @@
  * ----------------------------------------------------------------------------
  * Company    : SLAC National Accelerator Laboratory
  * ----------------------------------------------------------------------------
- * Description: Utilities for interacting with NVRAM
+ * Description: Utilities for interacting with NVRAM and the BSP cmdline.
  * ----------------------------------------------------------------------------
  * Notes:
  *    - Does not support mvme3100, which uses an i2c based nvram
- *    - Does not support uC5282
  *    - Does not support writing to nvram
  * ----------------------------------------------------------------------------
  * This file is part of 'rtems-init'. It is subject to the license terms in the
@@ -36,11 +35,11 @@
 #define MOTLOAD_GEV_SIZE 3592
 #endif
 
-/** Nvram signature/version; pulled from rtems-netboot */
+/* Nvram signature/version; pulled from rtems-netboot */
 #define NVRAM_SIGN 0xcafe
 #define NVRAM_SIGN_SIZE (2*sizeof(uint16_t))
 
-/** List of valid NVRAM params, for systems where we can't arbitrarily iterate them */
+/* List of valid NVRAM params, for systems where we can't arbitrarily iterate them */
 const char* bootp_params[] =
 {
   "BP_MYIP",
@@ -62,6 +61,8 @@ const char* bootp_params[] =
   NULL,
 };
 
+int bootp_param_count = sizeof(bootp_params) / sizeof(bootp_params[0]) - 1;
+
 /**
  * nvram boot parameters are set by Till's netboot system. Unlike GEVs,
  * this is just a string stored in nvram. The format is:
@@ -81,15 +82,15 @@ parse_boot_string(
   while (pboot < pend) {
     int quoted = 0;
 
-    /** Skip leading space */
+    /* Skip leading space */
     while (*pboot && isspace((int)*pboot) && pboot < pend)
       pboot++;
     
-    /** End of nvram */
+    /* End of nvram */
     if (!*pboot)
       break;
 
-    /** Scan until = token */
+    /* Scan until = token */
     const char* pstart = pboot;
     while (*pboot && *pboot != '=' && pboot<pend)
       pboot++;
@@ -97,12 +98,12 @@ parse_boot_string(
     if (!*pboot || pboot == pend)
       break;
     
-    /** Compare parameter name (pboot is '=' currently) */
+    /* Compare parameter name (pboot is '=' currently) */
     if (!strncmp(param, pstart, max(pboot-pstart, strlen(param)))) {
       pboot++;
       if (*pboot == '\'') quoted = 1, pboot++;
       if (pboot >= pend) break;
-      /** Eat until closing quote */
+      /* Eat until closing quote */
       size_t n = resultsz;
       char* p = result;
       while ((quoted ? *pboot != '\'' : *pboot != ' ') 
@@ -111,14 +112,14 @@ parse_boot_string(
         p++, pboot++, n--;
       }
       
-      /** Ensure terminated correctly */
+      /* Ensure terminated correctly */
       if (n > 0)
         *p = 0;
       else
         result[resultsz-1] = 0;
       return 0;
     }
-    /** No match; skip the parameter string */
+    /* No match; skip the parameter string */
     else {
       pboot++;
       if (*pboot == '\'') quoted = 1, pboot++;
@@ -143,39 +144,48 @@ parse_boot_foreach(
   while (pboot < pend) {
     int quoted = 0;
 
-    /** Skip leading space */
+    /* Skip leading space */
     while (*pboot && isspace((int)*pboot) && pboot < pend)
       pboot++;
     
-    /** End of nvram */
+    /* End of nvram */
     if (!*pboot)
       break;
 
-    /** Scan until = token */
+    /* Scan until = token */
     const char* pstart = pboot;
-    while (*pboot && *pboot != '=' && pboot<pend)
+    while (*pboot && *pboot != '=' && pboot < pend && !isspace((int)*pboot))
       pboot++;
-    
+
     if (!*pboot || pboot >= pend)
       break;
 
-    /** Compute parameter length; pboot is currently '=' */
+    /* if we have no = token, this isn't an env param */
+    if (isspace((int)*pboot)) {
+      continue;
+    }
+
+    /* Compute parameter length; pboot is currently '=' */
     pl = pboot-pstart;
 
-    /** Skip = and ' (if it's there) */
+    /* Skip = and ' (if it's there) */
     pboot++;
     if (*pboot == '\'') quoted = 1, pboot++;
     if (pboot >= pend) break;
     const char* vs = pboot;
 
-    /** Scan until closing quote or space */
+    /* Scan until closing quote or space */
     while ((quoted ? *pboot != '\'' : *pboot != ' ') && *pboot && pboot < pend)
       pboot++;
 
-    /** Compute value length, excluding quote */
+    /* Compute value length, excluding quote */
     vl = pboot - vs;
 
-    parsed(pstart, pl, vs, vl);
+    /* Things that start with '-' are command line args and should not be
+     * added to the environment. */
+    if (pstart[0] != '-') {
+      parsed(pstart, pl, vs, vl);
+    }
 
     pboot++;
   }
@@ -233,7 +243,7 @@ boot_param_show_all()
   const char* pboot = (const char*)BSP_NVRAM_BOOTPARMS_START;
   const char* pend = (const char*)BSP_NVRAM_BOOTPARMS_END;
   pboot += NVRAM_SIGN_SIZE;
-  /** Boot params are simply a string, can just directly print */
+  /* Boot params are simply a string, can just directly print */
   puts(pboot);
   return 0;
 #else
@@ -241,7 +251,7 @@ boot_param_show_all()
 #endif
 }
 
-#endif // HAVE_NVRAM
+#endif /* HAVE_NVRAM */
 
 #ifdef HAVE_MOTLOAD
 /**
@@ -257,16 +267,16 @@ gev_param(const char* param, char* result, size_t resultsz)
 
   while (pgev < pgevend) {
     const char* pstart = pgev;
-    /** Scan forward for = */
+    /* Scan forward for = */
     while (*pgev && *pgev != '=' && (pgev<pgevend))
       pgev++;
     
-    /** Failed to parse; probably end of nvram */
+    /* Failed to parse; probably end of nvram */
     if (*pgev != '=')
       break;
     
     if (!strncmp(pstart, param, pgev-pstart-1)) {
-      /** Matched; copy gev+1 (gev is '=') until \0 into result */
+      /* Matched; copy gev+1 (gev is '=') until \0 into result */
       pgev++;
       char* p = result;
       size_t n = resultsz;
@@ -275,22 +285,22 @@ gev_param(const char* param, char* result, size_t resultsz)
         n--, p++, pgev++;
       }
       
-      /** If we are boot parameters, strip trailing ' */
+      /* If we are boot parameters, strip trailing ' */
       if (p>result && *(p-1) == '\'')
         *(p-1) = 0;
 
-      /** Ensure terminated */
+      /* Ensure terminated */
       if (p-result < resultsz)
         *p = 0;
       else
         result[resultsz-1] = 0;
       return 0;
     }
-    /** No match, skip till next component (until \0) */
+    /* No match, skip till next component (until \0) */
     else {
       while (*pgev && (pgev<pgevend))
         pgev++;
-      /** Skip last \0 */
+      /* Skip last \0 */
       if (pgev < pgevend)
         pgev++;
     }
@@ -314,14 +324,14 @@ gev_show()
   int n = 0;
 
   while (pgev < pgevend) {
-    /** Skip \0 delimiters, but bail if we skip more than 2 */
+    /* Skip \0 delimiters, but bail if we skip more than 2 */
     while (!*pgev && pgev < pgevend)
       pgev++, n++;
     if (n > 2)
       break;
     n = 0;
     printf("%s\n", pgev);
-    /** Skip until next \0 */
+    /* Skip until next \0 */
     while (*pgev && pgev < pgevend)
       pgev++;
   }
@@ -431,7 +441,7 @@ cmdline_foreach(void(*parsed)(const char*, size_t, const char*, size_t))
   const char* cmdline = rtems_bsp_cmdline_get();
   if (!cmdline) return -1;
   
-  /** Cache the cmdline length, it shouldn't change */
+  /* Cache the cmdline length, it shouldn't change */
   static int len = -1;
   if (len < 0)
     len = strlen(cmdline);
@@ -454,11 +464,11 @@ cmdline_get_param(const char* param, char* res, size_t n)
 {
   const char* cmdline = rtems_bsp_cmdline_get();
   if (!cmdline) return -1;
-  
-  /** Cache the cmdline length, it shouldn't change */
+
+  /* Cache the cmdline length, it shouldn't change */
   static int len = -1;
   if (len < 0)
     len = strlen(cmdline);
-  
+
   return parse_boot_string(cmdline, cmdline+len, param, res, n);
 }

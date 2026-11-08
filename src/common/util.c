@@ -66,6 +66,9 @@ int
 parse_mount_spec(const char* mntblock, enum fstype* fstype, uint32_t* uid,
   uint32_t* gid, char* ip, char* src, char* mntpt, char* file)
 {
+  /* just make sure everything is NULL terminated... */
+  *ip = *src = *mntpt = *file = 0;
+
   int skip = 0;
   if (strHasPrefix(mntblock, "nfs2::"))
     skip = 6, *fstype = FS_TYPE_NFS2;

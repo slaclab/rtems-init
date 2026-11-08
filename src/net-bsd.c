@@ -270,15 +270,6 @@ network_init()
   int r;
   klog("Starting BSD networking stack\n");
 
-  // From EPICS base:
-#if defined(LIBBSP_I386_PC386_BSP_H)
-  // glorious hack to stub out useless EEPROM check
-  // which takes sooooo longggg w/ QEMU
-  // Writes a 'ret' instruction to immediatly return to the caller
-  extern void _bsd_e1000_validate_nvm_checksum(void);
-  *(char*)&_bsd_e1000_validate_nvm_checksum = 0xc3;
-#endif
-
   if (rtems_bsd_initialize() != RTEMS_SUCCESSFUL) {
     kerror("network_init: rtems_bsd_initialize failed\n");
     abort();

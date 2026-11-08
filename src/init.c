@@ -207,7 +207,7 @@ do_mount(
 }
 
 /**
- * Init mounts as specified by DHCP or NVRAM
+ * Init mounts as specified by DHCP, NVRAM, the bootloader, or BSP cmdline.
  */
 void
 mounts_init()
@@ -268,8 +268,6 @@ mounts_init()
 
 cmdline_mnt:
 
-#if __i386__
-  /* On i386, parse mounts provided by BSP command line */
   if (rtems_bsp_cmdline_get_param("--mount", value, sizeof(value))) {
     if (parse_mount_spec(value + sizeof("--mount"), 
         &fs, &uid, &gid, ip, src, mntpt, file) < 0) {
@@ -286,7 +284,6 @@ cmdline_mnt:
       kerror("Mount failed for %s:%s:%s\n", ip, src, file);
     }
   }
-#endif
 
 end:
   return;

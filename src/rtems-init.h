@@ -106,6 +106,7 @@ extern int shell_gev_get(int argc, char** argv);
 extern int shell_gev_show(int argc, char** argv);
 
 extern const char* bootp_params[];
+extern int bootp_param_count;
 
 /********************************************************
  * net.c
