@@ -183,7 +183,9 @@ dhcpcd_hook_handler(struct rtems_dhcpcd_hook* h, char* const* env)
   }
   
   if (bound) {
-    klog("dhcp: done\n");
+    if (verbose) {
+      klog("dhcp: done\n");
+    }
 
     /** Commit changes to environment */
     if (init_mode == INIT_MODE_DHCP) {
