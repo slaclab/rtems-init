@@ -170,7 +170,6 @@ do_mount(
       return -1;
     }
 
-    char newip[128];
     struct sockaddr_in* si =
       (struct sockaddr_in*)ai->ai_addr;
     si->sin_addr.s_addr = ntohl(si->sin_addr.s_addr);
