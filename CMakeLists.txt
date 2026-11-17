@@ -45,6 +45,9 @@ set(USE_BESTLINE 1)
 
 configure_file(config.h.in config.h)
 
+# RTEMS typically installs to lib/include
+set(CMAKE_INSTALL_INCLUDEDIR lib/include)
+
 add_definitions(-DHAVE_CONFIG_H)
 include_directories("${CMAKE_BINARY_DIR}")
 
